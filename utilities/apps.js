@@ -6,9 +6,13 @@ const html = `
 
 <div class="container">
 
-<h2 style="text-align:center;margin-bottom:30px;">
-Apps
-</h2>
+<!-- SECTION TITLE -->
+
+<div style="margin-bottom:20px;">
+<h2 style="font-size:18px;color:#94a3b8;">Utilities</h2>
+</div>
+
+<!-- APPS GRID -->
 
 <div class="apps-grid">
 
@@ -17,13 +21,6 @@ Apps
 <div class="app-card" onclick="openApp('notes')">
 <div class="app-icon">📝</div>
 <div class="app-name">Notes</div>
-</div>
-
-<!-- FUTURE APPS PLACEHOLDER -->
-
-<div class="app-card disabled">
-<div class="app-icon">+</div>
-<div class="app-name">Coming Soon</div>
 </div>
 
 </div>
