@@ -1,3 +1,17 @@
+html, body{
+height:100%;
+}
+
+body{
+display:flex;
+flex-direction:column;
+min-height:100vh;
+}
+
+#utilities{
+flex:1;
+}
+
 body{
 background:
 radial-gradient(circle at 20% 20%, #1e293b 0%, transparent 40%),
