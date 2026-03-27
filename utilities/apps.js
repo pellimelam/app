@@ -1,3 +1,19 @@
+/* =========================
+DYNAMIC APP LOADER
+========================= */
+
+const APP_LOADERS = {
+notes: () => import("./apps/notes.js"),
+
+/* FUTURE
+chat: () => import("./apps/chat.js"),
+crm: () => import("./apps/crm.js"),
+*/
+};
+
+
+
+
 const APP_CONFIG = [
 
 {
@@ -66,3 +82,26 @@ html += `</div></section>
 document.getElementById("utilities").innerHTML = html;
 
 }
+
+
+window.openApp = async function(appId){
+
+const loader = APP_LOADERS[appId];
+
+if(!loader){
+console.error("App not found:", appId);
+return;
+}
+
+/* LOAD APP FILE */
+await loader();
+
+/* OPEN APP */
+if(window.__apps && window.__apps[appId]){
+window.__apps[appId]();
+}else{
+console.error("App not initialized:", appId);
+}
+
+};
+
