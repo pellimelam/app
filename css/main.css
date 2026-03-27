@@ -164,3 +164,49 @@ margin:0;
 
 }
 
+
+/* =========================
+APPS GRID (MOBILE STYLE)
+========================= */
+
+.apps-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+gap:20px;
+justify-items:center;
+}
+
+.app-card{
+width:90px;
+text-align:center;
+cursor:pointer;
+transition:.2s;
+}
+
+.app-card:hover{
+transform:scale(1.05);
+}
+
+.app-icon{
+width:64px;
+height:64px;
+border-radius:18px;
+background:linear-gradient(180deg,#2563eb,#1d4ed8);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:26px;
+box-shadow:0 10px 25px rgba(0,0,0,.5);
+}
+
+.app-name{
+margin-top:8px;
+font-size:13px;
+color:#cbd5f5;
+}
+
+.app-card.disabled{
+opacity:0.4;
+pointer-events:none;
+}
+
