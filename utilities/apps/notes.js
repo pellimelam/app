@@ -1,4 +1,18 @@
 /* =========================
+APP REGISTRY
+========================= */
+
+window.__apps = window.__apps || {};
+
+window.__apps["notes"] = function(){
+loadNotesApp();
+};
+
+
+
+
+
+/* =========================
 INDEXED DB (PRO STORAGE)
 ========================= */
 
@@ -67,13 +81,6 @@ async function deleteNoteDB(id){
 }
 
 
-/* =========================
-OPEN APP
-========================= */
-
-window.openApp = function(app){
-if(app === "notes") loadNotesApp();
-};
 
 /* =========================
 LOAD MAIN UI
