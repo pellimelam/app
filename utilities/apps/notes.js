@@ -184,25 +184,44 @@ const view = document.getElementById("appView");
 
 view.innerHTML = `
 
-<div class="container">
+<div class="notes-app">
 
-<div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-<button class="btn btn-outline" onclick="backToList()">← Back</button>
-<strong>${note.title}</strong>
+  <!-- SIDEBAR -->
+
+  <div class="notes-sidebar">
+
+```
+<div class="sidebar-top">
+  <button class="btn btn-outline" onclick="backToList()">←</button>
+  <strong>${note.title}</strong>
 </div>
 
-<div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;" id="pagesBar"></div>
+<div id="pagesList" class="pages-list"></div>
 
-<textarea id="editor" style="
-width:100%;
-height:65vh;
-background:#020617;
-color:white;
-border:none;
-outline:none;
-padding:12px;
-border-radius:12px;
-"></textarea>
+<button class="btn btn-primary" onclick="addPage('${note.id}')">
+  + Page
+</button>
+```
+
+  </div>
+
+  <!-- EDITOR -->
+
+  <div class="notes-editor">
+
+```
+<!-- TOOLBAR -->
+<div class="editor-toolbar">
+  <button onclick="formatText('bold')">B</button>
+  <button onclick="formatText('italic')">I</button>
+  <button onclick="formatText('h1')">H1</button>
+</div>
+
+<!-- EDITABLE AREA -->
+<div id="editor" contenteditable="true" class="editor-area"></div>
+```
+
+  </div>
 
 </div>
 
@@ -218,13 +237,19 @@ PAGES SYSTEM
 
 function renderPages(note, noteId){
 
-const bar = document.getElementById("pagesBar");
+const list = document.getElementById("pagesList");
 
-bar.innerHTML = note.pages.map((p,i)=>`<button onclick="openPage('${noteId}','${p.id}')">Page ${i+1}</button>`).join("") + `<button onclick="addPage('${noteId}')">+</button>`;
+list.innerHTML = note.pages.map((p,i)=>`
+
+<div class="page-item" onclick="openPage('${noteId}','${p.id}')">
+  Page ${i+1}
+</div>
+`).join("");
 
 openPage(noteId, note.pages[0].id);
 
 }
+
 
 window.openPage = function(noteId, pageId){
 
@@ -234,14 +259,15 @@ const page = note.pages.find(p => p.id === pageId);
 
 const editor = document.getElementById("editor");
 
-editor.value = page.content;
+editor.innerHTML = page.content || "";
 
-editor.oninput = (e)=>{
-page.content = e.target.value;
+editor.oninput = ()=>{
+page.content = editor.innerHTML;
 saveNotes(notes);
 };
 
 };
+
 
 window.addPage = function(noteId){
 
@@ -258,6 +284,33 @@ saveNotes(notes);
 openNote(noteId);
 
 };
+
+
+window.formatText = function(type){
+
+const editor = document.getElementById("editor");
+
+if(type === "bold"){
+document.execCommand("bold");
+}
+
+if(type === "italic"){
+document.execCommand("italic");
+}
+
+if(type === "h1"){
+document.execCommand("formatBlock", false, "h1");
+}
+
+editor.focus();
+
+};
+
+
+
+
+
+
 
 /* =========================
 BACK
