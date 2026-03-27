@@ -1,0 +1,166 @@
+body{
+background:
+radial-gradient(circle at 20% 20%, #1e293b 0%, transparent 40%),
+radial-gradient(circle at 80% 0%, #1e40af 0%, transparent 40%),
+#0f172a;
+}
+
+/* WRAPPER */
+
+.wrapper{
+max-width:1200px;
+margin:auto;
+padding:120px 20px 80px;
+}
+
+/* HERO BUTTONS */
+
+.hero-buttons{
+margin-top:30px;
+display:flex;
+justify-content:center;
+gap:16px;
+flex-wrap:wrap;
+}
+
+.btn{
+padding:12px 24px;
+border-radius:10px;
+font-size:14px;
+text-decoration:none;
+transition:.25s;
+}
+
+.btn-primary{
+background:#2563eb;
+color:white;
+}
+
+.btn-primary:hover{
+background:#1d4ed8;
+}
+
+.btn-outline{
+border:1px solid #334155;
+color:#94a3b8;
+}
+
+.btn-outline:hover{
+border-color:#2563eb;
+color:white;
+}
+
+/* CARD EFFECT */
+
+.card{
+position:relative;
+overflow:hidden;
+}
+
+.card::before{
+content:"";
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:
+radial-gradient(
+circle 200px at var(--x) var(--y),
+rgba(37,99,235,.15),
+transparent 40%
+);
+opacity:0;
+transition:.25s;
+}
+
+.card:hover::before{
+opacity:1;
+}
+
+/* NAV SHADOW */
+
+.nav{
+box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+
+/* HERO TEXT */
+
+.hero h1{
+background:linear-gradient(90deg,#ffffff,#94a3b8);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+/* MOBILE SAFE */
+
+@media (max-width:768px){
+
+.wrapper{
+padding:100px 16px 60px;
+}
+
+.hero-buttons{
+gap:10px;
+}
+
+.btn{
+padding:10px 16px;
+font-size:13px;
+}
+
+}
+
+/* ===============================
+   NAV MOBILE FINAL FIX
+================================ */
+
+.nav-toggle{
+display:none;
+flex-direction:column;
+gap:4px;
+cursor:pointer;
+}
+
+.nav-toggle span{
+width:22px;
+height:2px;
+background:white;
+display:block;
+}
+
+@media (max-width:768px){
+
+.nav-inner{
+flex-direction:row;
+justify-content:space-between;
+}
+
+.nav-toggle{
+display:flex;
+}
+
+.nav-links{
+position:absolute;
+top:60px;
+left:0;
+width:100%;
+background:#0f172a;
+flex-direction:column;
+align-items:center;
+gap:16px;
+padding:20px 0;
+display:none;
+border-bottom:1px solid #1e293b;
+}
+
+.nav-links.active{
+display:flex;
+}
+
+.nav-links a{
+margin:0;
+}
+
+}
+

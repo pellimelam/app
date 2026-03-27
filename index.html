@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Vidhwaan Group – Global Technology, AI & Cultural Ecosystem</title>
+
+<meta name="description" content="Vidhwaan Group is a global ecosystem building platforms across artificial intelligence, technology, culture, and community infrastructure.">
+
+<link rel="canonical" href="https://vidhwaan.com/">
+
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph (for Google + social) -->
+<meta property="og:title" content="Vidhwaan Group – Global Ecosystem">
+<meta property="og:description" content="Building global platforms across AI, Technology and Culture">
+<meta property="og:url" content="https://vidhwaan.com">
+<meta property="og:type" content="website">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vidhwaan Group">
+<meta name="twitter:description" content="Global ecosystem across AI, Technology and Culture">
+<link rel="icon" href="./favicon-v2.ico">
+
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<link rel="preload" href="./icons1/logo.png" as="image">
+
+<link rel="stylesheet" href="./css/design-system.css">
+<link rel="stylesheet" href="./css/main.css">
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Vidhwaan Group",
+  "url": "https://vidhwaan.com",
+  "logo": "https://vidhwaan.com/icons1/logo.png",
+
+  "sameAs": [
+    "https://ai.vidhwaan.com",
+    "https://tech.vidhwaan.com",
+    "https://pellimelam.vidhwaan.com",
+    "https://foundation.vidhwaan.com"
+  ],
+
+  "hasPart": [
+    {
+      "@type": "WebSite",
+      "name": "Vidhwaan AI",
+      "url": "https://ai.vidhwaan.com"
+    },
+    {
+      "@type": "WebSite",
+      "name": "Vidhwaan Technology",
+      "url": "https://tech.vidhwaan.com"
+    },
+    {
+      "@type": "WebSite",
+      "name": "PelliMelam",
+      "url": "https://pellimelam.vidhwaan.com"
+    },
+    {
+      "@type": "WebSite",
+      "name": "Vidhwaan Foundation",
+      "url": "https://foundation.vidhwaan.com"
+    }
+  ]
+}
+</script>
+
+
+
+
+
+</head>
+
+
+
+<body>
+
+
+<!-- NAVBAR -->
+<div id="nav"></div>
+
+
+<!-- HERO -->
+<div id="hero"></div>
+
+
+<!-- PLATFORMS -->
+<div id="products"></div>
+
+
+
+<!-- SEO CONTENT (CRAWLABLE) -->
+<section style="display:none">
+
+<h2>Vidhwaan Platforms</h2>
+
+<p>
+Vidhwaan Group is a global ecosystem building platforms across artificial intelligence, technology, culture, and community infrastructure.
+</p>
+
+<ul>
+
+<li>
+<a href="https://pellimelam.vidhwaan.com">
+PelliMelam – Traditional Wedding Music and Cultural Platform
+</a>
+</li>
+
+<li>
+<a href="https://ai.vidhwaan.com">
+Vidhwaan AI – Artificial Intelligence Systems and Automation Platform
+</a>
+</li>
+
+<li>
+<a href="https://tech.vidhwaan.com">
+Vidhwaan Technology – Software Engineering and Scalable Infrastructure
+</a>
+</li>
+
+<li>
+<a href="https://foundation.vidhwaan.com">
+Vidhwaan Foundation – Social Impact and Community Development Platform
+</a>
+</li>
+
+</ul>
+
+</section>
+
+
+<!-- SITELINKS STRUCTURE -->
+<section style="display:none">
+
+<h2>Main Sections of Vidhwaan</h2>
+
+<ul>
+
+<li>
+<a href="https://vidhwaan.com/">
+Vidhwaan Group Main Website
+</a>
+</li>
+
+<li>
+<a href="https://vidhwaan.com/ecosystem/">
+Vidhwaan Ecosystem Overview
+</a>
+</li>
+
+<li>
+<a href="https://ai.vidhwaan.com">
+Vidhwaan AI Platform
+</a>
+</li>
+
+<li>
+<a href="https://tech.vidhwaan.com">
+Vidhwaan Technology Platform
+</a>
+</li>
+
+<li>
+<a href="https://pellimelam.vidhwaan.com">
+PelliMelam Cultural Platform
+</a>
+</li>
+
+<li>
+<a href="https://foundation.vidhwaan.com">
+Vidhwaan Foundation Platform
+</a>
+</li>
+
+</ul>
+
+</section>
+
+
+
+<!-- FUTURE UTILITIES -->
+<div id="utilities"></div>
+
+
+<!-- GLOBAL ECOSYSTEM -->
+<div id="ecosystem"></div>
+
+
+<!-- FOOTER -->
+<div id="footer"></div>
+
+
+
+<script type="module">
+
+import { loadNav } from "./utilities/nav.js"
+import { loadHero } from "./utilities/hero.js"
+import { loadProducts } from "./utilities/products.js"
+import { loadUtilities } from "./utilities/utilities.js"
+import { loadEcosystem } from "./utilities/ecosystem.js"
+import { loadFooter } from "./utilities/footer.js"
+
+loadNav()
+loadHero()
+loadProducts()
+loadUtilities()
+loadEcosystem()
+loadFooter()
+
+</script>
+
+
+<script>
+document.addEventListener("mousemove", (e) => {
+
+document.querySelectorAll(".card").forEach(card => {
+
+const rect = card.getBoundingClientRect();
+
+const x = e.clientX - rect.left;
+const y = e.clientY - rect.top;
+
+card.style.setProperty("--x", x + "px");
+card.style.setProperty("--y", y + "px");
+
+});
+
+});
+</script>
+
+
+
+</body>
+
+</html>
