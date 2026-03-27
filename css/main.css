@@ -253,7 +253,9 @@ cursor:pointer;
 color:#cbd5f5;
 }
 
-.page-item:hover
+.page-item:hover{
+background:#1e293b;
+}
 
 /* EDITOR */
 .notes-editor{
