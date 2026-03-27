@@ -1,4 +1,19 @@
 /* =========================
+APP ROUTER
+========================= */
+
+function navigateToApp(appId){
+history.pushState({ appId }, "", `/app/${appId}`);
+}
+
+function navigateHome(){
+history.pushState({}, "", `/`);
+}
+
+
+
+
+/* =========================
 DYNAMIC APP LOADER
 ========================= */
 
@@ -84,7 +99,9 @@ document.getElementById("utilities").innerHTML = html;
 }
 
 
-window.openApp = async function(appId){
+window.openApp = async function(appId, options = {}){
+
+const { skipPush = false } = options;
 
 const loader = APP_LOADERS[appId];
 
@@ -93,15 +110,70 @@ console.error("App not found:", appId);
 return;
 }
 
-/* LOAD APP FILE */
+/* URL UPDATE (only when needed) */
+if(!skipPush){
+navigateToApp(appId);
+}
+
+/* UI SWITCH */
+document.getElementById("utilities").style.display = "none";
+document.getElementById("appView").style.display = "block";
+
+/* LOAD ONLY ONCE */
+if(!window.__apps || !window.__apps[appId]){
 await loader();
+}
 
 /* OPEN APP */
-if(window.__apps && window.__apps[appId]){
 window.__apps[appId]();
-}else{
-console.error("App not initialized:", appId);
-}
 
 };
 
+
+
+window.backToList = function(){
+
+/* URL BACK */
+history.back();
+
+/* UI SWITCH */
+document.getElementById("appView").style.display = "none";
+document.getElementById("utilities").style.display = "block";
+
+};
+
+
+
+/* =========================
+INITIAL ROUTE LOAD
+========================= */
+
+window.addEventListener("DOMContentLoaded", async ()=>{
+
+const path = window.location.pathname;
+
+if(path.startsWith("/app/")){
+const appId = path.split("/app/")[1];
+
+if(APP_LOADERS[appId]){
+await window.openApp(appId, { skipPush: true });
+}
+}
+
+});
+
+
+
+window.addEventListener("popstate", async (e)=>{
+
+const path = window.location.pathname;
+
+if(path.startsWith("/app/")){
+const appId = path.split("/app/")[1];
+await window.openApp(appId, { skipPush: true });
+}else{
+document.getElementById("appView").style.display = "none";
+document.getElementById("utilities").style.display = "block";
+}
+
+});
