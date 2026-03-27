@@ -1,16 +1,71 @@
 /* =========================
-STORAGE ENGINE (UPGRADED)
+INDEXED DB (PRO STORAGE)
 ========================= */
 
-const STORAGE_KEY = "vidhwaan_notes_v2";
+const DB_NAME = "vidhwaan_notes_db";
+const STORE = "notes";
 
-function getNotes(){
-return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+let dbPromise;
+
+function initDB(){
+  if(dbPromise) return dbPromise;
+
+  dbPromise = new Promise((resolve, reject)=>{
+    const req = indexedDB.open(DB_NAME, 1);
+
+    req.onupgradeneeded = (e)=>{
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains(STORE)){
+        db.createObjectStore(STORE, { keyPath: "id" });
+      }
+    };
+
+    req.onsuccess = (e)=> resolve(e.target.result);
+    req.onerror = reject;
+  });
+
+  return dbPromise;
 }
 
-function saveNotes(notes){
-localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+async function getNotes(){
+  try{
+    const db = await initDB();
+
+    return new Promise(resolve=>{
+      const tx = db.transaction(STORE, "readonly");
+      const store = tx.objectStore(STORE);
+      const req = store.getAll();
+      req.onsuccess = ()=> resolve(req.result || []);
+      req.onerror = ()=> resolve([]);
+    });
+
+  }catch(e){
+    console.error("DB ERROR:", e);
+    return [];
+  }
 }
+
+async function saveNote(note){
+  try{
+    const db = await initDB();
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).put(note);
+  }catch(e){
+    console.error("SAVE ERROR:", e);
+  }
+}
+
+
+async function deleteNoteDB(id){
+  try{
+    const db = await initDB();
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).delete(id);
+  }catch(e){
+    console.error("DELETE ERROR:", e);
+  }
+}
+
 
 /* =========================
 OPEN APP
@@ -51,7 +106,7 @@ background:#020617;
 color:white;
 ">
 
-<div id="notesList"></div>
+<div id="notesList">Loading...</div>
 
 </div>
 
@@ -67,48 +122,49 @@ renderNotes();
 RENDER LIST
 ========================= */
 
-function renderNotes(){
+async function renderNotes(){
 
 const query = document.getElementById("searchNotes")?.value?.toLowerCase() || "";
 
-let notes = getNotes();
+let notes = await getNotes();
 
 /* FILTER */
 notes = notes.filter(n =>
-n.title.toLowerCase().includes(query)
+  String(n.title || "").toLowerCase().includes(query)
 );
 
-/* SORT (PIN FIRST) */
+/* SORT */
 notes.sort((a,b)=> (b.pinned === true) - (a.pinned === true));
 
 const container = document.getElementById("notesList");
 
 if(notes.length === 0){
-container.innerHTML = "<p>No notes found</p>";
-return;
+  container.innerHTML = `
+  <div style="text-align:center;opacity:0.6;padding:20px;">
+  No notes yet<br>
+  <small>Create your first note</small>
+  </div>
+  `;
+  return;
 }
 
 container.innerHTML = notes.map(n => `
-
 <div class="card" style="margin-bottom:12px;">
-
   <div style="display:flex;justify-content:space-between;">
+    
+    <div onclick="openNote('${n.id}')" style="cursor:pointer;">
+      ${n.pinned ? "📌 " : ""}
+      <strong>${n.title || "Untitled"}</strong>
+    </div>
 
-```
-<div onclick="openNote('${n.id}')" style="cursor:pointer;">
-  ${n.pinned ? "📌 " : ""}
-  <strong>${n.title || "Untitled"}</strong>
-</div>
-
-<div>
-  <button onclick="togglePin('${n.id}')">📌</button>
-  <button onclick="renameNote('${n.id}')">✏️</button>
-  <button onclick="deleteNote('${n.id}')">🗑️</button>
-</div>
-```
+    <div>
+      <button onclick="togglePin('${n.id}')">📌</button>
+      <button onclick="renameNote('${n.id}')">✏️</button>
+      <button onclick="deleteNote('${n.id}')">🗑️</button>
+      <button onclick="exportNote('${n.id}')">Export</button>
+    </div>
 
   </div>
-
 </div>
 `).join("");
 
@@ -118,56 +174,61 @@ container.innerHTML = notes.map(n => `
 CREATE NOTE (MULTI PAGE)
 ========================= */
 
-window.createNote = function(){
-
-const notes = getNotes();
+window.createNote = async function(){
 
 const newNote = {
 id: Date.now().toString(),
 title: "New Note",
 pinned: false,
-pages: [
-{
-id: Date.now().toString(),
-content: ""
-}
-]
+folder: "default",
+pages: [{ id: Date.now().toString(), content: "" }]
 };
 
-notes.unshift(newNote);
-
-saveNotes(notes);
+await saveNote(newNote);
 
 renderNotes();
 
 };
+
 
 /* =========================
 DELETE / RENAME / PIN
 ========================= */
 
-window.deleteNote = function(id){
-let notes = getNotes();
-notes = notes.filter(n => n.id !== id);
-saveNotes(notes);
+window.deleteNote = async function(id){
+await deleteNoteDB(id);
 renderNotes();
 };
 
-window.renameNote = function(id){
-const notes = getNotes();
+
+window.renameNote = async function(id){
+const notes = await getNotes();
 const note = notes.find(n => n.id === id);
+if(!note){
+  backToList();
+  return;
+}
+
 const name = prompt("Rename note", note.title);
-if(!name) return;
+if(!name || !name.trim()) return;
+
 note.title = name;
-saveNotes(notes);
+
+await saveNote(note);
 renderNotes();
 };
 
-window.togglePin = function(id){
-const notes = getNotes();
+window.togglePin = async function(id){
+const notes = await getNotes();
 const note = notes.find(n => n.id === id);
+if(!note){
+  backToList();
+  return;
+}
+
 note.pinned = !note.pinned;
-saveNotes(notes);
+
+await saveNote(note);
 renderNotes();
 };
 
@@ -175,10 +236,14 @@ renderNotes();
 OPEN NOTE (PAGES UI)
 ========================= */
 
-window.openNote = function(id){
+window.openNote = async function(id){
 
-const notes = getNotes();
+const notes = await getNotes();
 const note = notes.find(n => n.id === id);
+if(!note){
+  backToList();
+  return;
+}
 
 const view = document.getElementById("appView");
 
@@ -241,7 +306,12 @@ const list = document.getElementById("pagesList");
 
 list.innerHTML = note.pages.map((p,i)=>`
 
-<div class="page-item" onclick="openPage('${noteId}','${p.id}')">
+<div class="page-item"
+draggable="true"
+ondragstart="dragStart('${p.id}')"
+ondrop="dropPage('${noteId}','${p.id}')"
+ondragover="event.preventDefault()"
+onclick="openPage('${noteId}','${p.id}')">
   Page ${i+1}
 </div>
 `).join("");
@@ -251,35 +321,79 @@ openPage(noteId, note.pages[0].id);
 }
 
 
-window.openPage = function(noteId, pageId){
+let draggedPage = null;
 
-const notes = getNotes();
+window.dragStart = function(id){
+draggedPage = id;
+};
+
+window.dropPage = async function(noteId, targetId){
+
+const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
+if(!note) return;
+
+const from = note.pages.findIndex(p => p.id === draggedPage);
+const to = note.pages.findIndex(p => p.id === targetId);
+
+const [moved] = note.pages.splice(from,1);
+note.pages.splice(to,0,moved);
+
+await saveNote(note);
+
+openNote(noteId);
+
+};
+
+
+
+
+
+window.openPage = async function(noteId, pageId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note) return;
 const page = note.pages.find(p => p.id === pageId);
+if(!page) return;
 
 const editor = document.getElementById("editor");
 
+if(editor){
+  editor.blur(); // ensure previous input event fires
+}
+
 editor.innerHTML = page.content || "";
+setTimeout(()=> editor.focus(), 0);
 
-editor.oninput = ()=>{
-page.content = editor.innerHTML;
-saveNotes(notes);
+
+editor.oninput = async ()=>{
+  page.content = editor.innerHTML;
+
+  const text = editor.innerText.trim();
+  if(text.length > 3){
+    note.title = text.substring(0, 30);
+    document.querySelector(".sidebar-top strong").innerText = note.title;
+  }
+
+  await saveNote(note);
 };
 
 };
 
 
-window.addPage = function(noteId){
+window.addPage = async function(noteId){
 
-const notes = getNotes();
+const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
+if(!note) return;
 
 note.pages.push({
-id: Date.now().toString(),
-content: ""
+  id: Date.now().toString(),
+  content: ""
 });
 
-saveNotes(notes);
+await saveNote(note);
 
 openNote(noteId);
 
@@ -307,8 +421,28 @@ editor.focus();
 };
 
 
+window.exportNote = async function(id){
 
+const notes = await getNotes();
+const note = notes.find(n => n.id === id);
+if(!note){
+  backToList();
+  return;
+}
 
+let content = note.pages.map(p => p.content).join("\n\n");
+
+const blob = new Blob([content], { type: "text/plain" });
+
+const a = document.createElement("a");
+const url = URL.createObjectURL(blob);
+a.href = url;
+a.download = note.title + ".txt";
+a.click();
+
+setTimeout(()=> URL.revokeObjectURL(url), 1000);
+
+};
 
 
 
