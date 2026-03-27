@@ -258,40 +258,30 @@ view.innerHTML = `
 
 <div class="notes-app">
 
-  <!-- SIDEBAR -->
-
   <div class="notes-sidebar">
 
-```
-<div class="sidebar-top">
-  <button class="btn btn-outline" onclick="backToList()">←</button>
-  <strong>${note.title}</strong>
-</div>
+    <div class="sidebar-top">
+      <button class="btn btn-outline" onclick="backToList()">←</button>
+      <strong>${note.title}</strong>
+    </div>
 
-<div id="pagesList" class="pages-list"></div>
+    <div id="pagesList" class="pages-list"></div>
 
-<button class="btn btn-primary" onclick="addPage('${note.id}')">
-  + Page
-</button>
-```
+    <button class="btn btn-primary" onclick="addPage('${note.id}')">
+      + Page
+    </button>
 
   </div>
 
-  <!-- EDITOR -->
-
   <div class="notes-editor">
 
-```
-<!-- TOOLBAR -->
-<div class="editor-toolbar">
-  <button onclick="formatText('bold')">B</button>
-  <button onclick="formatText('italic')">I</button>
-  <button onclick="formatText('h1')">H1</button>
-</div>
+    <div class="editor-toolbar">
+      <button onclick="formatText('bold')">B</button>
+      <button onclick="formatText('italic')">I</button>
+      <button onclick="formatText('h1')">H1</button>
+    </div>
 
-<!-- EDITABLE AREA -->
-<div id="editor" contenteditable="true" class="editor-area"></div>
-```
+    <div id="editor" contenteditable="true" class="editor-area"></div>
 
   </div>
 
@@ -458,5 +448,5 @@ BACK
 ========================= */
 
 window.backToList = function(){
-loadNotesApp();
+  history.back();
 };
