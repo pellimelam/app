@@ -6,23 +6,21 @@ const html = `
 
 <div class="container">
 
-<!-- SECTION TITLE -->
+<!-- UTILITIES SECTION -->
 
-<div style="margin-bottom:20px;">
-<h2 style="font-size:18px;color:#94a3b8;">Utilities</h2>
-</div>
-
-<!-- APPS GRID -->
+<div style="margin-bottom:25px;">
+<h2 style="font-size:16px;color:#94a3b8;margin-bottom:15px;">
+Utilities
+</h2>
 
 <div class="apps-grid">
-
-<!-- NOTES APP -->
 
 <div class="app-card" onclick="openApp('notes')">
 <div class="app-icon">📝</div>
 <div class="app-name">Notes</div>
 </div>
 
+</div>
 </div>
 
 </div>
