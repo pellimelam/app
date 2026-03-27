@@ -18,7 +18,7 @@ DYNAMIC APP LOADER
 ========================= */
 
 const APP_LOADERS = {
-notes: () => import("./apps/notes.js"),
+notes: () => import("./utilities/apps/notes.js"),
 
 /* FUTURE
 chat: () => import("./apps/chat.js"),
