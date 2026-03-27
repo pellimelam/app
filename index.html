@@ -198,6 +198,21 @@ Vidhwaan Foundation Platform
 
 
 
+<script>
+/* HANDLE REDIRECT FROM 404 */
+(function(){
+  const redirect = sessionStorage.redirect;
+  if(redirect){
+    sessionStorage.removeItem("redirect");
+    history.replaceState(null, "", redirect);
+  }
+})();
+</script>
+
+
+  
+
+
 <script type="module">
 
 import { loadNav } from "./utilities/nav.js"
