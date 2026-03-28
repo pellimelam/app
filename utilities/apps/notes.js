@@ -101,7 +101,7 @@ view.innerHTML = `
   <button class="btn btn-outline" onclick="backToList()">←</button>
 
   <!-- CENTER: TITLE -->
-  <h2 style="margin:0;text-align:center;flex:1;">Notes</h2>
+  <h2 style="margin:0;text-align:center;flex:1;">VID Notes</h2>
 
   <!-- RIGHT: NEW -->
   <button class="btn btn-primary" onclick="createNote()">+ New</button>
