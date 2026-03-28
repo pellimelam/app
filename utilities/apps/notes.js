@@ -126,7 +126,7 @@ color:white;
 
 document.getElementById("searchNotes").addEventListener("input", renderNotes);
 
-renderNotes();
+await renderNotes();
 
 }
 
@@ -146,7 +146,12 @@ notes = notes.filter(n =>
 );
 
 /* SORT */
-notes.sort((a,b)=> (b.pinned === true) - (a.pinned === true));
+notes.sort((a,b)=>{
+  if(b.pinned !== a.pinned){
+    return (b.pinned === true) - (a.pinned === true);
+  }
+  return Number(b.id) - Number(a.id);
+});
 
 const container = document.getElementById("notesList");
 
@@ -193,7 +198,7 @@ const newNote = {
   title: "New Note",
   pinned: false,
   folder: "default",
-  pages: [{ id: Date.now().toString(), name: "New Page", content: "" }]
+  pages: [{ id: Date.now().toString(), name: "New Page", content: "", pinned: false }]
 };
 
 await saveNote(newNote);
@@ -206,10 +211,9 @@ await renderNotes();
 /* =========================
 DELETE / RENAME / PIN
 ========================= */
-
 window.deleteNote = async function(id){
-await deleteNoteDB(id);
-renderNotes();
+  await deleteNoteDB(id);
+  await renderNotes();
 };
 
 
@@ -227,7 +231,7 @@ if(!name || !name.trim()) return;
 note.title = name.substring(0, 40);
 
 await saveNote(note);
-renderNotes();
+await renderNotes();
 };
 
 window.togglePin = async function(id){
@@ -241,7 +245,7 @@ if(!note){
 note.pinned = !note.pinned;
 
 await saveNote(note);
-renderNotes();
+await renderNotes();
 };
 
 /* =========================
@@ -274,6 +278,16 @@ view.innerHTML = `
              style="background:transparent;border:none;color:white;font-weight:bold;">
     </div>
 
+    <input id="searchPages" placeholder="Search pages..." style="
+    width:100%;
+    padding:10px;
+    margin:10px 0;
+    border-radius:10px;
+    border:none;
+    background:#020617;
+    color:white;
+    ">
+
     <div id="pagesList" class="pages-list"></div>
 
     <button class="btn btn-primary" onclick="addPage('${note.id}')">
@@ -282,31 +296,18 @@ view.innerHTML = `
 
   </div>
 
-  <div class="notes-editor">
 
-    <div class="editor-toolbar">
-
-    <button onclick="formatText('bold')">B</button>
-    <button onclick="formatText('italic')">I</button>
-
-    <button onclick="changeFontSize(2)">A+</button>
-    <button onclick="changeFontSize(-2)">A-</button>
-
-    </div>
-
-    <div id="editor" 
-         contenteditable="true" 
-         class="editor-area" 
-         data-placeholder="Start writing your note...">
-    </div>
-
-  </div>
 
 </div>
 
 `;
 
+
 renderPages(note, id);
+
+document.getElementById("searchPages").addEventListener("input", ()=>{
+  renderPages(note, id);
+});
 
 };
 
@@ -337,6 +338,7 @@ window.updateNoteTitle = async function(noteId, value){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
+if(!note) return;
 
 note.title = value;
 
@@ -353,22 +355,51 @@ function renderPages(note, noteId){
 
 const list = document.getElementById("pagesList");
 
-list.innerHTML = note.pages.map((p,i)=>`
+const query = document.getElementById("searchPages")?.value?.toLowerCase() || "";
 
-<div class="page-item" onclick="openPage('${noteId}','${p.id}')">
+/* FILTER */
+let pages = note.pages.filter(p =>
+  String(p.name || "").toLowerCase().includes(query)
+);
 
-  <span>${p.name || "Page " + (i+1)}</span>
+/* SORT (same as notes) */
+pages.sort((a,b)=>{
+  if(b.pinned !== a.pinned){
+    return (b.pinned === true) - (a.pinned === true);
+  }
+  return Number(b.id) - Number(a.id);
+});
 
-  <button onclick="event.stopPropagation(); renamePage('${noteId}','${p.id}')">✏️</button>
-  <button onclick="event.stopPropagation(); downloadPage('${noteId}','${p.id}')">⬇️</button>
+if(pages.length === 0){
+  list.innerHTML = `
+  <div style="text-align:center;opacity:0.6;padding:20px;">
+  No pages<br>
+  <small>Create your first page</small>
+  </div>`;
+  return;
+}
 
+list.innerHTML = pages.map(p => `
+<div class="card" style="margin-bottom:12px;">
+  <div style="display:flex;justify-content:space-between;">
+    
+    <div style="flex:1;cursor:pointer;" onclick="event.stopPropagation(); openPage('${noteId}','${p.id}')">
+      ${p.pinned ? "📌 " : ""}
+      <strong>${p.name || "Untitled"}</strong>
+    </div>
+
+    <div>
+      <button onclick="event.stopPropagation(); togglePagePin('${noteId}','${p.id}')">📌</button>
+      <button onclick="event.stopPropagation(); renamePage('${noteId}','${p.id}')">✏️</button>
+      <button onclick="event.stopPropagation(); deletePage('${noteId}','${p.id}')">🗑️</button>
+      <button onclick="event.stopPropagation(); downloadPage('${noteId}','${p.id}')">Export</button>
+    </div>
+
+  </div>
 </div>
-
 `).join("");
 
-if(note.pages.length){
-  openPage(noteId, note.pages[0].id);
-}
+
 
 }
 
@@ -380,6 +411,8 @@ let draggedPage = null;
 window.dragStart = function(id){
 draggedPage = id;
 };
+
+
 
 window.dropPage = async function(noteId, targetId){
 
@@ -408,8 +441,13 @@ window.renamePage = async function(noteId, pageId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
+if(!note){
+  backToList();
+  return;
+}
 
 const page = note.pages.find(p => p.id === pageId);
+if(!page) return;
 
 const name = prompt("Page name", page.name || "");
 
@@ -427,9 +465,42 @@ renderPages(note, noteId);
 
 
 
+window.togglePagePin = async function(noteId, pageId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note){
+  backToList();
+  return;
+}
+
+const page = note.pages.find(p => p.id === pageId);
+if(!page) return;
+
+page.pinned = !page.pinned;
+
+await saveNote(note);
+
+renderPages(note, noteId);
+};
 
 
 
+window.deletePage = async function(noteId, pageId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note){
+  backToList();
+  return;
+}
+
+note.pages = note.pages.filter(p => p.id !== pageId);
+
+await saveNote(note);
+
+renderPages(note, noteId);
+};
 
 
 window.openPage = async function(noteId, pageId){
@@ -441,30 +512,42 @@ if(!note) return;
 const page = note.pages.find(p => p.id === pageId);
 if(!page) return;
 
+const view = document.getElementById("appView");
+
+view.innerHTML = `
+
+<div class="container">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <button class="btn btn-outline" onclick="openNote('${noteId}')">← Back</button>
+
+    <strong>${page.name || "Untitled"}</strong>
+  </div>
+
+  <div class="editor-toolbar">
+    <button onclick="formatText('bold')">B</button>
+    <button onclick="formatText('italic')">I</button>
+    <button onclick="changeFontSize(2)">A+</button>
+    <button onclick="changeFontSize(-2)">A-</button>
+  </div>
+
+  <div id="editor" contenteditable="true"
+       class="editor-area"
+       style="min-height:70vh;">
+  </div>
+
+</div>
+`;
+
 const editor = document.getElementById("editor");
 
-/* load content */
 editor.innerHTML = page.content || "";
 
-/* 🔥 FORCE FOCUS */
-setTimeout(()=>{
-  editor.focus();
-}, 50);
+setTimeout(()=> editor.focus(), 50);
 
-/* 🔥 CLEAR OLD HANDLER */
-editor.oninput = null;
-
-/* 🔥 SAVE LOGIC */
 editor.oninput = async ()=>{
-
   page.content = editor.innerHTML;
-
-  const text = editor.innerText.trim();
-
-
-
   await saveNote(note);
-
 };
 
 };
@@ -477,12 +560,16 @@ window.addPage = async function(noteId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
-if(!note) return;
+if(!note){
+  backToList();
+  return;
+}
 
-note.pages.push({
+note.pages.unshift({
   id: Date.now().toString(),
   name: "New Page",
-  content: ""
+  content: "",
+  pinned: false
 });
 
 await saveNote(note);
@@ -519,6 +606,10 @@ window.exportNote = async function(id){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === id);
+if(!note){
+  backToList();
+  return;
+}
 
 let content = "";
 
@@ -550,7 +641,13 @@ window.downloadPage = async function(noteId, pageId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
+if(!note){
+  backToList();
+  return;
+}
+
 const page = note.pages.find(p => p.id === pageId);
+if(!page) return;
 
 const content = page.content.replace(/<[^>]+>/g, "");
 
