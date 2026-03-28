@@ -91,7 +91,7 @@ html += `</div></div>`;
 
 html += `</div></section>
 
-<div id="appView" style="display:none;"></div>
+
 `;
 
 document.getElementById("utilities").innerHTML = html;
@@ -120,16 +120,22 @@ document.getElementById("utilities").style.display = "none";
 document.getElementById("appView").style.display = "block";
 
 /* LOAD ONLY ONCE */
-if(!window.__apps || !window.__apps[appId]){
 await loader();
+
+let retries = 0;
+
+while((!window.__apps || !window.__apps[appId]) && retries < 10){
+  await new Promise(r => setTimeout(r, 50));
+  retries++;
 }
 
-/* OPEN APP */
-window.__apps[appId]();
+if(window.__apps && window.__apps[appId]){
+  window.__apps[appId]();
+}else{
+  console.error("App failed to initialize:", appId);
+}
 
 };
-
-
 
 window.backToList = function(){
 
