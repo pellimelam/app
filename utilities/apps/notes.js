@@ -193,7 +193,7 @@ const newNote = {
   title: "New Note",
   pinned: false,
   folder: "default",
-  pages: [{ id: Date.now().toString(), name: "Page 1", content: "" }]
+  pages: [{ id: Date.now().toString(), name: "New Page", content: "" }]
 };
 
 await saveNote(newNote);
@@ -269,7 +269,9 @@ view.innerHTML = `
 
     <div class="sidebar-top">
       <button class="btn btn-outline" onclick="backToList()">←</button>
-      <strong>${note.title}</strong>
+      <input value="${note.title}" 
+             onchange="updateNoteTitle('${note.id}', this.value)" 
+             style="background:transparent;border:none;color:white;font-weight:bold;">
     </div>
 
     <div id="pagesList" class="pages-list"></div>
@@ -290,8 +292,6 @@ view.innerHTML = `
     <button onclick="changeFontSize(2)">A+</button>
     <button onclick="changeFontSize(-2)">A-</button>
 
-    <input type="color" onchange="changeColor(this.value)" />
-
     </div>
 
     <div id="editor" 
@@ -311,10 +311,6 @@ renderPages(note, id);
 };
 
 
-
-window.changeColor = function(color){
-document.execCommand("foreColor", false, color);
-};
 
 
 
@@ -337,7 +333,16 @@ editor.focus();
 
 
 
+window.updateNoteTitle = async function(noteId, value){
 
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+
+note.title = value;
+
+await saveNote(note);
+
+};
 
 
 /* =========================
@@ -350,7 +355,7 @@ const list = document.getElementById("pagesList");
 
 list.innerHTML = note.pages.map((p,i)=>`
 
-<div class="page-item ${i === 0 ? 'active' : ''}" onclick="openPage('${noteId}','${p.id}')">
+<div class="page-item" onclick="openPage('${noteId}','${p.id}')">
 
   <span>${p.name || "Page " + (i+1)}</span>
 
@@ -366,6 +371,8 @@ if(note.pages.length){
 }
 
 }
+
+
 
 
 let draggedPage = null;
@@ -394,6 +401,9 @@ openNote(noteId);
 
 
 
+
+
+
 window.renamePage = async function(noteId, pageId){
 
 const notes = await getNotes();
@@ -412,6 +422,12 @@ await saveNote(note);
 renderPages(note, noteId);
 
 };
+
+
+
+
+
+
 
 
 
@@ -441,15 +457,12 @@ editor.oninput = null;
 /* 🔥 SAVE LOGIC */
 editor.oninput = async ()=>{
 
-  const maxHeight = editor.scrollHeight > editor.clientHeight;
-
-  if(maxHeight){
-    alert("Page full. Please create new page.");
-    editor.innerHTML = editor.innerHTML.slice(0, -1);
-    return;
-  }
-
   page.content = editor.innerHTML;
+
+  const text = editor.innerText.trim();
+
+
+
   await saveNote(note);
 
 };
@@ -479,6 +492,8 @@ openNote(noteId);
 };
 
 
+
+
 window.formatText = function(type){
 
 const editor = document.getElementById("editor");
@@ -500,6 +515,35 @@ editor.focus();
 };
 
 
+window.exportNote = async function(id){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === id);
+
+let content = "";
+
+note.pages.forEach((p, i)=>{
+  const clean = (p.content || "")
+    .replace(/<br>/gi,"\n")
+    .replace(/<\/p>/gi,"\n")
+    .replace(/<[^>]+>/g,"")
+    .trim();
+
+  content += `--- ${p.name || "Page " + (i+1)} ---\n`;
+  content += clean + "\n\n";
+});
+
+const blob = new Blob([content], { type: "text/plain" });
+
+const a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = note.title + ".txt";
+a.click();
+
+};
+
+
+
 
 
 window.downloadPage = async function(noteId, pageId){
@@ -508,61 +552,16 @@ const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
 const page = note.pages.find(p => p.id === pageId);
 
-let div = document.createElement("div");
+const content = page.content.replace(/<[^>]+>/g, "");
 
-div.style.padding = "40px";
-div.style.minHeight = "1123px";
+const blob = new Blob([content], { type: "text/plain" });
 
-div.innerHTML = `
-<h2>${page.name}</h2>
-<hr/>
-${page.content}
-`;
-
-html2pdf().from(div).save((page.name || "page") + ".pdf");
+const a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = (page.name || "page") + ".txt";
+a.click();
 
 };
-
-
-
-
-
-
-
-
-
-window.exportNote = async function(id){
-
-const notes = await getNotes();
-const note = notes.find(n => n.id === id);
-
-let container = document.createElement("div");
-
-note.pages.forEach((p,i)=>{
-
-  let pageDiv = document.createElement("div");
-
-  pageDiv.style.pageBreakAfter = "always";
-  pageDiv.style.padding = "40px";
-  pageDiv.style.minHeight = "1123px";
-
-  pageDiv.innerHTML = `
-    <h2>${p.name || "Page "+(i+1)}</h2>
-    <hr/>
-    ${p.content || ""}
-  `;
-
-  container.appendChild(pageDiv);
-
-});
-
-html2pdf().from(container).save((note.title || "note") + ".pdf");
-
-};
-
-
-
-
 
 /* =========================
 BACK
