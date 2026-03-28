@@ -34,7 +34,7 @@ const APP_CONFIG = [
 {
 section: "Utilities",
 apps: [
-{ id: "notes", name: "Notes", icon: "📝" }
+{ id: "notes", name: "VID Notes", icon: "📝" }
 ]
 },
 
