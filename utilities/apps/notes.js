@@ -193,7 +193,7 @@ const newNote = {
   title: "New Note",
   pinned: false,
   folder: "default",
-  pages: [{ id: Date.now().toString(), content: "" }]
+  pages: [{ id: Date.now().toString(), name: "Page 1", content: "" }]
 };
 
 await saveNote(newNote);
@@ -283,9 +283,13 @@ view.innerHTML = `
   <div class="notes-editor">
 
     <div class="editor-toolbar">
-      <button onclick="formatText('bold')">B</button>
-      <button onclick="formatText('italic')">I</button>
-      <button onclick="formatText('h1')">H1</button>
+
+    <button onclick="formatText('bold')">B</button>
+    <button onclick="formatText('italic')">I</button>
+
+    <button onclick="changeFontSize(2)">A+</button>
+    <button onclick="changeFontSize(-2)">A-</button>
+
     </div>
 
     <div id="editor" 
@@ -305,6 +309,31 @@ renderPages(note, id);
 };
 
 
+
+
+
+window.changeFontSize = function(change){
+
+const editor = document.getElementById("editor");
+
+const current = window.getComputedStyle(editor).fontSize;
+
+let size = parseInt(current);
+
+size += change;
+
+editor.style.fontSize = size + "px";
+
+editor.focus();
+
+};
+
+
+
+
+
+
+
 /* =========================
 PAGES SYSTEM
 ========================= */
@@ -315,9 +344,13 @@ const list = document.getElementById("pagesList");
 
 list.innerHTML = note.pages.map((p,i)=>`
 
-<div class="page-item"
-onclick="openPage('${noteId}','${p.id}')">
-  Page ${i+1}
+<div class="page-item ${i === 0 ? 'active' : ''}" onclick="openPage('${noteId}','${p.id}')">
+
+  <span>${p.name || "Page " + (i+1)}</span>
+
+  <button onclick="event.stopPropagation(); renamePage('${noteId}','${p.id}')">✏️</button>
+  <button onclick="event.stopPropagation(); downloadPage('${noteId}','${p.id}')">⬇️</button>
+
 </div>
 
 `).join("");
@@ -355,6 +388,26 @@ openNote(noteId);
 
 
 
+window.renamePage = async function(noteId, pageId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+
+const page = note.pages.find(p => p.id === pageId);
+
+const name = prompt("Page name", page.name || "");
+
+if(!name) return;
+
+page.name = name;
+
+await saveNote(note);
+
+renderPages(note, noteId);
+
+};
+
+
 
 
 window.openPage = async function(noteId, pageId){
@@ -386,12 +439,6 @@ editor.oninput = async ()=>{
 
   const text = editor.innerText.trim();
 
-  if(text.length > 3){
-    note.title = text.substring(0, 30);
-
-    const titleEl = document.querySelector(".sidebar-top strong");
-    if(titleEl) titleEl.innerText = note.title;
-  }
 
   await saveNote(note);
 
@@ -411,6 +458,7 @@ if(!note) return;
 
 note.pages.push({
   id: Date.now().toString(),
+  name: "New Page",
   content: ""
 });
 
@@ -442,35 +490,74 @@ editor.focus();
 };
 
 
-window.exportNote = async function(id){
+
+
+window.downloadPage = async function(noteId, pageId){
 
 const notes = await getNotes();
-const note = notes.find(n => n.id === id);
-if(!note){
-  backToList();
-  return;
-}
+const note = notes.find(n => n.id === noteId);
+const page = note.pages.find(p => p.id === pageId);
 
-let content = note.pages.map(p => p.content).join("\n\n");
+const content = page.content.replace(/<[^>]+>/g, "");
 
 const blob = new Blob([content], { type: "text/plain" });
 
 const a = document.createElement("a");
-const url = URL.createObjectURL(blob);
-a.href = url;
-a.download = note.title + ".txt";
+a.href = URL.createObjectURL(blob);
+a.download = (page.name || "page") + ".txt";
 a.click();
-
-setTimeout(()=> URL.revokeObjectURL(url), 1000);
 
 };
 
 
+
+
+
+
+
+
+
+
+window.exportNote = async function(id){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === id);
+
+let content = "";
+
+note.pages.forEach((p, i)=>{
+  const clean = (p.content || "")
+    .replace(/<br>/gi,"\n")
+    .replace(/<\/p>/gi,"\n")
+    .replace(/<[^>]+>/g,"")
+    .trim();
+
+  content += `--- ${p.name || "Page " + (i+1)} ---\n`;
+  content += clean + "\n\n";
+});
+
+const blob = new Blob([content], { type: "text/plain" });
+
+const a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = note.title + ".txt";
+a.click();
+
+};
 
 /* =========================
 BACK
 ========================= */
 
 window.backToList = function(){
-  history.back();
+
+document.getElementById("appView").style.display = "none";
+document.getElementById("utilities").style.display = "block";
+
+/* reset state */
+window.__notes_initialized = false;
+
+/* clean URL */
+history.replaceState({}, "", "/");
+
 };
