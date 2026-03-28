@@ -246,7 +246,9 @@ OPEN NOTE (PAGES UI)
 
 window.openNote = async function(id){
 
-history.pushState({ screen: "pages" }, "", "#pages");
+if(location.hash !== "#pages"){
+  history.pushState({ screen: "pages" }, "", "#pages");
+}
 
 
 
@@ -488,7 +490,9 @@ renderPages(note, noteId);
 
 window.openPage = async function(noteId, pageId){
 
-history.pushState({ screen: "editor" }, "", "#editor");
+if(location.hash !== "#editor"){
+  history.pushState({ screen: "editor" }, "", "#editor");
+}
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -587,34 +591,65 @@ editor.focus();
 };
 
 
+
 window.exportNote = async function(id){
 
-const notes = await getNotes();
-const note = notes.find(n => n.id === id);
-if(!note){
-  backToList();
-  return;
-}
+  const notes = await getNotes();
+  const note = notes.find(n => n.id === id);
+  if(!note){
+    backToList();
+    return;
+  }
 
-let content = "";
+  const zip = new JSZip();
 
-note.pages.forEach((p, i)=>{
-  const clean = (p.content || "")
-    .replace(/<br>/gi,"\n")
-    .replace(/<\/p>/gi,"\n")
-    .replace(/<[^>]+>/g,"")
-    .trim();
+  for(let i = 0; i < note.pages.length; i++){
 
-  content += `--- ${p.name || "Page " + (i+1)} ---\n`;
-  content += clean + "\n\n";
-});
+    const page = note.pages[i];
 
-const blob = new Blob([content], { type: "text/plain" });
+    // convert HTML → proper text (same as downloadPage)
+    const temp = document.createElement("div");
+    temp.innerHTML = page.content || "";
 
-const a = document.createElement("a");
-a.href = URL.createObjectURL(blob);
-a.download = note.title + ".txt";
-a.click();
+    let text = "";
+
+    function parseNode(node){
+      if(node.nodeType === Node.TEXT_NODE){
+        text += node.nodeValue;
+      }
+
+      if(node.nodeType === Node.ELEMENT_NODE){
+
+        if(node.tagName === "BR"){
+          text += "\n";
+        }
+
+        node.childNodes.forEach(parseNode);
+
+        if(["DIV","P"].includes(node.tagName)){
+          text += "\n";
+        }
+      }
+    }
+
+    temp.childNodes.forEach(parseNode);
+
+    const content = text
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+    const fileName = (page.name || `Page_${i+1}`)
+      .replace(/[^\w\d]/g, "_") + ".txt";
+
+    zip.file(fileName, content);
+  }
+
+  const blob = await zip.generateAsync({ type: "blob" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (note.title || "note") + ".zip";
+  a.click();
 
 };
 
@@ -682,19 +717,24 @@ a.click();
 
 
 
-window.addEventListener("popstate", ()=>{
+window.addEventListener("popstate", async ()=>{
 
   const hash = window.location.hash;
 
-  // NOTES SCREEN (no back button)
+  // BACK TO NOTES
   if(!hash){
     loadNotesApp();
     return;
   }
 
-  // PAGES SCREEN
+  // BACK TO PAGES (FIXED)
   if(hash === "#pages"){
-    loadNotesApp();
+    const notes = await getNotes();
+    if(notes.length){
+      openNote(notes[0].id);
+    }else{
+      loadNotesApp();
+    }
     return;
   }
 
