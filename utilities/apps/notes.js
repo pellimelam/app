@@ -164,7 +164,7 @@ container.innerHTML = notes.map(n => `
 <div class="card" style="margin-bottom:12px;">
   <div style="display:flex;justify-content:space-between;">
     
-    <div style="flex:1;cursor:pointer;" onclick="event.stopPropagation(); openNote('${n.id}')">
+    <div style="flex:1;cursor:pointer;" onclick="openNote('${n.id}')">
       ${n.pinned ? "📌 " : ""}
       <strong>${n.title || "Untitled"}</strong>
     </div>
@@ -263,44 +263,15 @@ const view = document.getElementById("appView");
 
 view.innerHTML = `
 
-<div class="notes-app">
+<div class="container">
 
-  <div class="notes-sidebar">
-
-    <div class="sidebar-top">
-      <button class="btn btn-outline" onclick="backToList()">←</button>
-      <strong>${note.title}</strong>
-    </div>
-
-    <div id="pagesList" class="pages-list"></div>
-
-    <button class="btn btn-primary" onclick="addPage('${note.id}')">
-      + Page
-    </button>
-
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+    <button class="btn btn-outline" onclick="loadNotesApp()">←</button>
+    <h2>${note.title}</h2>
+    <button class="btn btn-primary" onclick="addPage('${note.id}')">+ Page</button>
   </div>
 
-  <div class="notes-editor">
-
-    <div class="editor-toolbar">
-
-    <button onclick="formatText('bold')">B</button>
-    <button onclick="formatText('italic')">I</button>
-
-    <button onclick="changeFontSize(2)">A+</button>
-    <button onclick="changeFontSize(-2)">A-</button>
-
-    <input type="color" onchange="changeColor(this.value)" />
-
-    </div>
-
-    <div id="editor" 
-         contenteditable="true" 
-         class="editor-area" 
-         data-placeholder="Start writing your note...">
-    </div>
-
-  </div>
+  <div id="pagesList"></div>
 
 </div>
 
@@ -312,15 +283,12 @@ renderPages(note, id);
 
 
 
-window.changeColor = function(color){
-document.execCommand("foreColor", false, color);
-};
-
 
 
 window.changeFontSize = function(change){
 
 const editor = document.getElementById("editor");
+if(!editor) return;
 
 const current = window.getComputedStyle(editor).fontSize;
 
@@ -348,22 +316,36 @@ function renderPages(note, noteId){
 
 const list = document.getElementById("pagesList");
 
+/* PIN FIRST */
+note.pages.sort((a,b)=> (b.pinned === true) - (a.pinned === true));
+
 list.innerHTML = note.pages.map((p,i)=>`
 
-<div class="page-item ${i === 0 ? 'active' : ''}" onclick="openPage('${noteId}','${p.id}')">
+<div class="card" style="margin-bottom:12px;cursor:pointer;transition:0.2s;"
+onclick="openPageEditor('${noteId}','${p.id}')"
+onmousedown="this.style.transform='scale(0.98)'"
+onmouseup="this.style.transform='scale(1)'">
 
-  <span>${p.name || "Page " + (i+1)}</span>
+  <div style="display:flex;justify-content:space-between;align-items:center;">
 
-  <button onclick="event.stopPropagation(); renamePage('${noteId}','${p.id}')">✏️</button>
-  <button onclick="event.stopPropagation(); downloadPage('${noteId}','${p.id}')">⬇️</button>
+    <div>
+      ${p.pinned ? "📌 " : ""}
+      <strong>${p.name || "Page " + (i+1)}</strong>
+    </div>
+
+    <div>
+      <button onclick="event.stopPropagation(); movePage('${noteId}','${p.id}',-1)">⬆️</button>
+      <button onclick="event.stopPropagation(); movePage('${noteId}','${p.id}',1)">⬇️</button>
+      <button onclick="event.stopPropagation(); togglePagePin('${noteId}','${p.id}')">📌</button>
+      <button onclick="event.stopPropagation(); renamePage('${noteId}','${p.id}')">✏️</button>
+      <button onclick="event.stopPropagation(); downloadPage('${noteId}','${p.id}')">⬇️</button>
+    </div>
+
+  </div>
 
 </div>
 
 `).join("");
-
-if(note.pages.length){
-  openPage(noteId, note.pages[0].id);
-}
 
 }
 
@@ -399,7 +381,17 @@ window.renamePage = async function(noteId, pageId){
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
 
+if(!note){
+  backToList();
+  return;
+}
+
 const page = note.pages.find(p => p.id === pageId);
+
+if(!page){
+  openNote(noteId);
+  return;
+}
 
 const name = prompt("Page name", page.name || "");
 
@@ -416,46 +408,123 @@ renderPages(note, noteId);
 
 
 
-window.openPage = async function(noteId, pageId){
+
+
+
+
+
+window.openPageEditor = async function(noteId, pageId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+
+if(!note){
+  backToList();
+  return;
+}
+
+const page = note.pages.find(p => p.id === pageId);
+
+if(!page){
+  openNote(noteId);
+  return;
+}
+
+const view = document.getElementById("appView");
+
+view.innerHTML = `
+
+<div class="container">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+    <button class="btn btn-outline" onclick="openNote('${noteId}')">←</button>
+    <strong>${page.name}</strong>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+
+    <button onclick="formatText('bold')">B</button>
+    <button onclick="formatText('italic')">I</button>
+
+    <button onclick="changeFontSize(2)">A+</button>
+    <button onclick="changeFontSize(-2)">A-</button>
+
+    <div style="display:flex;gap:6px;">
+      <div onclick="changeColor('#000')" style="width:20px;height:20px;border-radius:50%;background:#000;"></div>
+      <div onclick="changeColor('#ef4444')" style="width:20px;height:20px;border-radius:50%;background:#ef4444;"></div>
+      <div onclick="changeColor('#22c55e')" style="width:20px;height:20px;border-radius:50%;background:#22c55e;"></div>
+      <div onclick="changeColor('#3b82f6')" style="width:20px;height:20px;border-radius:50%;background:#3b82f6;"></div>
+    </div>
+
+  </div>
+
+  <div id="editor" contenteditable="true" class="editor-area"></div>
+
+</div>
+
+`;
+
+const editor = document.getElementById("editor");
+
+if(!editor) return;
+
+/* RESET HANDLER */
+editor.oninput = null;
+
+editor.innerHTML = page.content || "";
+
+editor.oninput = async ()=>{
+
+  const content = editor.innerHTML.trim();
+
+  if(content === page.content) return;
+
+  page.content = content;
+
+  await saveNote(note);
+
+};
+
+
+
+window.movePage = async function(noteId, pageId, dir){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
 if(!note) return;
 
+const index = note.pages.findIndex(p => p.id === pageId);
+const newIndex = index + dir;
+
+if(newIndex < 0 || newIndex >= note.pages.length) return;
+
+[note.pages[index], note.pages[newIndex]] =
+[note.pages[newIndex], note.pages[index]];
+
+await saveNote(note);
+
+renderPages(note, noteId);
+
+};
+
+
+
+
+
+window.togglePagePin = async function(noteId, pageId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+
 const page = note.pages.find(p => p.id === pageId);
-if(!page) return;
 
-const editor = document.getElementById("editor");
+page.pinned = !page.pinned;
 
-/* load content */
-editor.innerHTML = page.content || "";
+await saveNote(note);
 
-/* 🔥 FORCE FOCUS */
-setTimeout(()=>{
-  editor.focus();
-}, 50);
-
-/* 🔥 CLEAR OLD HANDLER */
-editor.oninput = null;
-
-/* 🔥 SAVE LOGIC */
-editor.oninput = async ()=>{
-
-  const maxHeight = editor.scrollHeight > editor.clientHeight;
-
-  if(maxHeight){
-    alert("Page full. Please create new page.");
-    editor.innerHTML = editor.innerHTML.slice(0, -1);
-    return;
-  }
-
-  page.content = editor.innerHTML;
-  await saveNote(note);
+renderPages(note, noteId);
 
 };
-
-};
-
 
 
 
@@ -502,26 +571,44 @@ editor.focus();
 
 
 
+window.changeColor = function(color){
+
+const editor = document.getElementById("editor");
+
+if(!editor) return;
+
+/* apply color */
+document.execCommand("foreColor", false, color);
+
+editor.focus();
+
+};
+
+
+
+
+
+
 window.downloadPage = async function(noteId, pageId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
+if(!note) return;
+
 const page = note.pages.find(p => p.id === pageId);
+if(!page) return;
 
-let div = document.createElement("div");
+const content = (page.content || "").replace(/<[^>]+>/g, "");
 
-div.style.padding = "40px";
-div.style.minHeight = "1123px";
+const blob = new Blob([content], { type: "text/plain" });
 
-div.innerHTML = `
-<h2>${page.name}</h2>
-<hr/>
-${page.content}
-`;
-
-html2pdf().from(div).save((page.name || "page") + ".pdf");
+const a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = (page.name || "page") + ".txt";
+a.click();
 
 };
+
 
 
 
@@ -536,33 +623,41 @@ window.exportNote = async function(id){
 const notes = await getNotes();
 const note = notes.find(n => n.id === id);
 
-let container = document.createElement("div");
+let content = "";
 
-note.pages.forEach((p,i)=>{
+/* HEADER */
+content += "========================================\n";
+content += (note.title || "NOTE").toUpperCase() + "\n";
+content += "========================================\n\n";
 
-  let pageDiv = document.createElement("div");
+note.pages.forEach((p, i)=>{
 
-  pageDiv.style.pageBreakAfter = "always";
-  pageDiv.style.padding = "40px";
-  pageDiv.style.minHeight = "1123px";
+  const clean = (p.content || "")
+    .replace(/<br>/gi,"\n")
+    .replace(/<\/p>/gi,"\n")
+    .replace(/<[^>]+>/g,"")
+    .trim();
 
-  pageDiv.innerHTML = `
-    <h2>${p.name || "Page "+(i+1)}</h2>
-    <hr/>
-    ${p.content || ""}
-  `;
+  content += "----------------------------------------\n";
+  content += `PAGE ${i+1}: ${(p.name || "Untitled").toUpperCase()}\n`;
+  content += "----------------------------------------\n\n";
 
-  container.appendChild(pageDiv);
+  content += clean + "\n\n\n";
 
 });
 
-html2pdf().from(container).save((note.title || "note") + ".pdf");
+/* FOOTER SPACE */
+content += "========================================\n";
+
+/* DOWNLOAD */
+const blob = new Blob([content], { type: "text/plain;charset=utf-8;" });
+
+const a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = (note.title || "note") + ".txt";
+a.click();
 
 };
-
-
-
-
 
 /* =========================
 BACK
