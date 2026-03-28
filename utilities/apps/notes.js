@@ -264,7 +264,7 @@ view.innerHTML = `
 <div class="container">
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-    <button class="btn btn-outline" onclick="loadNotesApp()">←</button>
+    <button class="btn btn-outline" onclick="history.back()">←</button>
     <h2>${note.title || "Note"}</h2>
     <button class="btn btn-primary" onclick="addPage('${note.id}')">+ Page</button>
   </div>
@@ -634,7 +634,11 @@ if(!note){
 const page = note.pages.find(p => p.id === pageId);
 if(!page) return;
 
-const content = page.content.replace(/<[^>]+>/g, "");
+const content = (page.content || "")
+  .replace(/<br\s*\/?>/gi, "\n")
+  .replace(/<\/p>/gi, "\n\n")
+  .replace(/<[^>]+>/g, "")
+  .trim();
 
 const blob = new Blob([content], { type: "text/plain" });
 
