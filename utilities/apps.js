@@ -99,6 +99,8 @@ document.getElementById("utilities").innerHTML = html;
 }
 
 
+window.__apps_loaded = window.__apps_loaded || {};
+
 window.openApp = async function(appId, options = {}){
 
 const { skipPush = false } = options;
@@ -106,45 +108,40 @@ const { skipPush = false } = options;
 const loader = APP_LOADERS[appId];
 
 if(!loader){
-console.error("App not found:", appId);
-return;
+  console.error("App not found:", appId);
+  return;
 }
 
-/* URL UPDATE (only when needed) */
+/* URL UPDATE */
 if(!skipPush){
-navigateToApp(appId);
+  navigateToApp(appId);
 }
 
 /* UI SWITCH */
 document.getElementById("utilities").style.display = "none";
 document.getElementById("appView").style.display = "block";
 
-/* LOAD ONLY ONCE */
-await loader();
-
-let retries = 0;
-
-while((!window.__apps || !window.__apps[appId]) && retries < 10){
-  await new Promise(r => setTimeout(r, 50));
-  retries++;
+/* 🔥 LOAD ONLY ONCE (CRITICAL FIX) */
+if(!window.__apps_loaded[appId]){
+  await loader();
+  window.__apps_loaded[appId] = true;
 }
 
+/* OPEN APP */
 if(window.__apps && window.__apps[appId]){
   window.__apps[appId]();
-}else{
-  console.error("App failed to initialize:", appId);
 }
 
 };
 
+
+
 window.backToList = function(){
 
-/* URL BACK */
-history.back();
-
-/* UI SWITCH */
 document.getElementById("appView").style.display = "none";
 document.getElementById("utilities").style.display = "block";
+
+navigateHome();
 
 };
 
