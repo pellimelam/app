@@ -5,7 +5,12 @@ APP REGISTRY
 window.__apps = window.__apps || {};
 
 window.__apps["notes"] = function(){
-loadNotesApp();
+
+  if(!window.__notes_initialized){
+    window.__notes_initialized = true;
+    loadNotesApp();
+  }
+
 };
 
 
@@ -159,16 +164,16 @@ container.innerHTML = notes.map(n => `
 <div class="card" style="margin-bottom:12px;">
   <div style="display:flex;justify-content:space-between;">
     
-    <div style="flex:1;cursor:pointer;" onclick="openNote('${n.id}')">
+    <div style="flex:1;cursor:pointer;" onclick="event.stopPropagation(); openNote('${n.id}')">
       ${n.pinned ? "📌 " : ""}
       <strong>${n.title || "Untitled"}</strong>
     </div>
 
     <div>
-      <button onclick="togglePin('${n.id}')">📌</button>
-      <button onclick="renameNote('${n.id}')">✏️</button>
-      <button onclick="deleteNote('${n.id}')">🗑️</button>
-      <button onclick="exportNote('${n.id}')">Export</button>
+      <button onclick="event.stopPropagation(); togglePin('${n.id}')">📌</button>
+      <button onclick="event.stopPropagation(); renameNote('${n.id}')">✏️</button>
+      <button onclick="event.stopPropagation(); deleteNote('${n.id}')">🗑️</button>
+      <button onclick="event.stopPropagation(); exportNote('${n.id}')">Export</button>
     </div>
 
   </div>
@@ -244,6 +249,8 @@ OPEN NOTE (PAGES UI)
 ========================= */
 
 window.openNote = async function(id){
+
+window.__notes_initialized = true;
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === id);
