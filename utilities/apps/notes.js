@@ -246,6 +246,8 @@ OPEN NOTE (PAGES UI)
 
 window.openNote = async function(id){
 
+history.pushState({ screen: "pages" }, "", "#pages");
+
 
 
 const notes = await getNotes();
@@ -259,40 +261,29 @@ const view = document.getElementById("appView");
 
 view.innerHTML = `
 
-<div class="notes-app">
+<div class="container">
 
-  <div class="notes-sidebar">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+    <button class="btn btn-outline" onclick="loadNotesApp()">←</button>
+    <h2>${note.title || "Note"}</h2>
+    <button class="btn btn-primary" onclick="addPage('${note.id}')">+ Page</button>
+  </div>
 
-    <div class="sidebar-top">
-      <button class="btn btn-outline" onclick="backToList()">←</button>
-      <input value="${note.title}" 
-             onchange="updateNoteTitle('${note.id}', this.value)" 
-             style="background:transparent;border:none;color:white;font-weight:bold;">
-    </div>
-
-    <input id="searchPages" placeholder="Search pages..." style="
+  <input id="searchPages" placeholder="Search pages..." style="
     width:100%;
     padding:10px;
-    margin:10px 0;
+    margin-bottom:15px;
     border-radius:10px;
     border:none;
     background:#020617;
     color:white;
-    ">
+  ">
 
-    <div id="pagesList" class="pages-list"></div>
-
-    <button class="btn btn-primary" onclick="addPage('${note.id}')">
-      + Page
-    </button>
-
-  </div>
-
-
+  <div id="pagesList"></div>
 
 </div>
-
 `;
+
 
 
 renderPages(note, id);
@@ -497,6 +488,8 @@ renderPages(note, noteId);
 
 window.openPage = async function(noteId, pageId){
 
+history.pushState({ screen: "editor" }, "", "#editor");
+
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
 if(!note) return;
@@ -653,3 +646,29 @@ a.click();
 };
 
 
+
+window.addEventListener("popstate", async ()=>{
+
+  const hash = window.location.hash;
+
+  // BACK FROM EDITOR → GO TO PAGES
+  if(hash === "#pages"){
+    const notes = await getNotes();
+    if(notes.length){
+      openNote(notes[0].id); // reopen last note safely
+    }else{
+      loadNotesApp();
+    }
+    return;
+  }
+
+  // BACK FROM PAGES → GO TO NOTES
+  if(hash === ""){
+    loadNotesApp();
+    return;
+  }
+
+  // DEFAULT → GO TO MAIN APP
+  backToList();
+
+});
