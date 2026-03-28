@@ -3,7 +3,7 @@ APP ROUTER
 ========================= */
 
 function navigateToApp(appId){
-history.pushState({ appId }, "", `./${appId}`);
+history.pushState({ appId }, "", `/app/${appId}`);
 }
 
 function navigateHome(){
@@ -152,12 +152,12 @@ window.addEventListener("DOMContentLoaded", async ()=>{
 
 const path = window.location.pathname;
 
-if(path.includes("notes")){
-const appId = path.split("/").pop();
+if(path.startsWith("/app/")){
+  const appId = path.split("/app/")[1];
 
-if(APP_LOADERS[appId]){
-await window.openApp(appId, { skipPush: true });
-}
+  if(APP_LOADERS[appId]){
+    await window.openApp(appId, { skipPush: true });
+  }
 }
 
 });
