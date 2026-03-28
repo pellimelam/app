@@ -159,7 +159,7 @@ container.innerHTML = notes.map(n => `
 <div class="card" style="margin-bottom:12px;">
   <div style="display:flex;justify-content:space-between;">
     
-    <div onclick="openNote('${n.id}')" style="cursor:pointer;">
+    <div style="flex:1;cursor:pointer;" onclick="openNote('${n.id}')">
       ${n.pinned ? "📌 " : ""}
       <strong>${n.title || "Untitled"}</strong>
     </div>
