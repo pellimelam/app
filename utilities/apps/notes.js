@@ -224,7 +224,7 @@ if(!note){
 const name = prompt("Rename note", note.title);
 if(!name || !name.trim()) return;
 
-note.title = name;
+note.title = name.substring(0, 40);
 
 await saveNote(note);
 renderNotes();
@@ -290,6 +290,8 @@ view.innerHTML = `
     <button onclick="changeFontSize(2)">A+</button>
     <button onclick="changeFontSize(-2)">A-</button>
 
+    <input type="color" onchange="changeColor(this.value)" />
+
     </div>
 
     <div id="editor" 
@@ -309,6 +311,10 @@ renderPages(note, id);
 };
 
 
+
+window.changeColor = function(color){
+document.execCommand("foreColor", false, color);
+};
 
 
 
@@ -399,7 +405,7 @@ const name = prompt("Page name", page.name || "");
 
 if(!name) return;
 
-page.name = name;
+page.name = name.substring(0, 30);
 
 await saveNote(note);
 
@@ -435,11 +441,15 @@ editor.oninput = null;
 /* 🔥 SAVE LOGIC */
 editor.oninput = async ()=>{
 
+  const maxHeight = editor.scrollHeight > editor.clientHeight;
+
+  if(maxHeight){
+    alert("Page full. Please create new page.");
+    editor.innerHTML = editor.innerHTML.slice(0, -1);
+    return;
+  }
+
   page.content = editor.innerHTML;
-
-  const text = editor.innerText.trim();
-
-
   await saveNote(note);
 
 };
@@ -498,17 +508,20 @@ const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
 const page = note.pages.find(p => p.id === pageId);
 
-const content = page.content.replace(/<[^>]+>/g, "");
+let div = document.createElement("div");
 
-const blob = new Blob([content], { type: "text/plain" });
+div.style.padding = "40px";
+div.style.minHeight = "1123px";
 
-const a = document.createElement("a");
-a.href = URL.createObjectURL(blob);
-a.download = (page.name || "page") + ".txt";
-a.click();
+div.innerHTML = `
+<h2>${page.name}</h2>
+<hr/>
+${page.content}
+`;
+
+html2pdf().from(div).save((page.name || "page") + ".pdf");
 
 };
-
 
 
 
@@ -523,27 +536,33 @@ window.exportNote = async function(id){
 const notes = await getNotes();
 const note = notes.find(n => n.id === id);
 
-let content = "";
+let container = document.createElement("div");
 
-note.pages.forEach((p, i)=>{
-  const clean = (p.content || "")
-    .replace(/<br>/gi,"\n")
-    .replace(/<\/p>/gi,"\n")
-    .replace(/<[^>]+>/g,"")
-    .trim();
+note.pages.forEach((p,i)=>{
 
-  content += `--- ${p.name || "Page " + (i+1)} ---\n`;
-  content += clean + "\n\n";
+  let pageDiv = document.createElement("div");
+
+  pageDiv.style.pageBreakAfter = "always";
+  pageDiv.style.padding = "40px";
+  pageDiv.style.minHeight = "1123px";
+
+  pageDiv.innerHTML = `
+    <h2>${p.name || "Page "+(i+1)}</h2>
+    <hr/>
+    ${p.content || ""}
+  `;
+
+  container.appendChild(pageDiv);
+
 });
 
-const blob = new Blob([content], { type: "text/plain" });
-
-const a = document.createElement("a");
-a.href = URL.createObjectURL(blob);
-a.download = note.title + ".txt";
-a.click();
+html2pdf().from(container).save((note.title || "note") + ".pdf");
 
 };
+
+
+
+
 
 /* =========================
 BACK
@@ -551,13 +570,13 @@ BACK
 
 window.backToList = function(){
 
-document.getElementById("appView").style.display = "none";
-document.getElementById("utilities").style.display = "block";
+/* go back to notes list UI */
+loadNotesApp();
+
+/* keep app route */
+history.replaceState({}, "", "/app/notes");
 
 /* reset state */
-window.__notes_initialized = false;
-
-/* clean URL */
-history.replaceState({}, "", "/");
+window.__notes_initialized = true;
 
 };
