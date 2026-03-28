@@ -95,10 +95,19 @@ view.innerHTML = `
 
 <div class="container">
 
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-<h2>Notes</h2>
-<button class="btn btn-primary" onclick="createNote()">+ New</button>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
+
+  <!-- LEFT: BACK -->
+  <button class="btn btn-outline" onclick="backToList()">←</button>
+
+  <!-- CENTER: TITLE -->
+  <h2 style="margin:0;text-align:center;flex:1;">Notes</h2>
+
+  <!-- RIGHT: NEW -->
+  <button class="btn btn-primary" onclick="createNote()">+ New</button>
+
 </div>
+
 
 <input id="searchNotes" placeholder="Search notes..." style="
 width:100%;
@@ -522,7 +531,7 @@ view.innerHTML = `
 
   <div id="editor" contenteditable="true"
        class="editor-area"
-       style="min-height:70vh;">
+       style="min-height:70vh; height:auto;">
   </div>
 
 </div>
