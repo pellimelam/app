@@ -4,13 +4,8 @@ APP REGISTRY
 
 window.__apps = window.__apps || {};
 
-window.__apps["notes"] = function(){
-
-  if(!window.__notes_initialized){
-    window.__notes_initialized = true;
-    loadNotesApp();
-  }
-
+window.__apps["notes"] = async function(){
+  await loadNotesApp();
 };
 
 
@@ -93,11 +88,8 @@ LOAD MAIN UI
 
 async function loadNotesApp(){
 
-document.getElementById("utilities").style.display = "none";
-
 const view = document.getElementById("appView");
-
-view.style.display = "block";
+if(!view) return;
 
 view.innerHTML = `
 
@@ -254,7 +246,7 @@ OPEN NOTE (PAGES UI)
 
 window.openNote = async function(id){
 
-window.__notes_initialized = true;
+
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === id);
@@ -660,19 +652,4 @@ a.click();
 
 };
 
-/* =========================
-BACK
-========================= */
 
-window.backToList = function(){
-
-/* go back to notes list UI */
-loadNotesApp();
-
-/* keep app route */
-history.replaceState({}, "", "/app/notes");
-
-/* reset state */
-window.__notes_initialized = true;
-
-};
