@@ -91,7 +91,7 @@ async function deleteNoteDB(id){
 LOAD MAIN UI
 ========================= */
 
-function loadNotesApp(){
+async function loadNotesApp(){
 
 document.getElementById("utilities").style.display = "none";
 
