@@ -504,7 +504,7 @@ view.innerHTML = `
 <div class="container">
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-    <button class="btn btn-outline" onclick="openNote('${noteId}')">← Back</button>
+    <button class="btn btn-outline" onclick="history.back()">← Back</button>
 
     <strong>${page.name || "Untitled"}</strong>
   </div>
@@ -634,11 +634,42 @@ if(!note){
 const page = note.pages.find(p => p.id === pageId);
 if(!page) return;
 
-const content = (page.content || "")
-  .replace(/<br\s*\/?>/gi, "\n")
-  .replace(/<\/p>/gi, "\n\n")
-  .replace(/<[^>]+>/g, "")
+const temp = document.createElement("div");
+temp.innerHTML = page.content || "";
+
+/* convert block elements to proper spacing */
+const blockTags = ["DIV", "P", "BR"];
+
+let text = "";
+
+function parseNode(node){
+  if(node.nodeType === Node.TEXT_NODE){
+    text += node.nodeValue;
+  }
+
+  if(node.nodeType === Node.ELEMENT_NODE){
+
+    if(node.tagName === "BR"){
+      text += "\n";
+    }
+
+    node.childNodes.forEach(parseNode);
+
+    if(blockTags.includes(node.tagName)){
+      text += "\n";
+    }
+  }
+}
+
+temp.childNodes.forEach(parseNode);
+
+/* preserve spacing properly */
+const content = text
+  .replace(/\n{3,}/g, "\n\n")   // limit extra breaks
+  .replace(/[ \t]{2,}/g, " ")   // normalize spaces slightly
   .trim();
+
+
 
 const blob = new Blob([content], { type: "text/plain" });
 
@@ -651,28 +682,20 @@ a.click();
 
 
 
-window.addEventListener("popstate", async ()=>{
+window.addEventListener("popstate", ()=>{
 
   const hash = window.location.hash;
 
-  // BACK FROM EDITOR → GO TO PAGES
-  if(hash === "#pages"){
-    const notes = await getNotes();
-    if(notes.length){
-      openNote(notes[0].id); // reopen last note safely
-    }else{
-      loadNotesApp();
-    }
-    return;
-  }
-
-  // BACK FROM PAGES → GO TO NOTES
-  if(hash === ""){
+  // NOTES SCREEN (no back button)
+  if(!hash){
     loadNotesApp();
     return;
   }
 
-  // DEFAULT → GO TO MAIN APP
-  backToList();
+  // PAGES SCREEN
+  if(hash === "#pages"){
+    loadNotesApp();
+    return;
+  }
 
 });
