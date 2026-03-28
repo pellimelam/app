@@ -184,19 +184,19 @@ CREATE NOTE (MULTI PAGE)
 window.createNote = async function(){
 
 const newNote = {
-id: Date.now().toString(),
-title: "New Note",
-pinned: false,
-folder: "default",
-pages: [{ id: Date.now().toString(), content: "" }]
+  id: Date.now().toString(),
+  title: "New Note",
+  pinned: false,
+  folder: "default",
+  pages: [{ id: Date.now().toString(), content: "" }]
 };
 
 await saveNote(newNote);
 
-renderNotes();
+/* refresh list */
+await renderNotes();
 
 };
-
 
 /* =========================
 DELETE / RENAME / PIN
@@ -281,7 +281,11 @@ view.innerHTML = `
       <button onclick="formatText('h1')">H1</button>
     </div>
 
-    <div id="editor" contenteditable="true" class="editor-area"></div>
+    <div id="editor" 
+         contenteditable="true" 
+         class="editor-area" 
+         data-placeholder="Start writing your note...">
+    </div>
 
   </div>
 
@@ -292,6 +296,7 @@ view.innerHTML = `
 renderPages(note, id);
 
 };
+
 
 /* =========================
 PAGES SYSTEM
@@ -304,16 +309,15 @@ const list = document.getElementById("pagesList");
 list.innerHTML = note.pages.map((p,i)=>`
 
 <div class="page-item"
-draggable="true"
-ondragstart="dragStart('${p.id}')"
-ondrop="dropPage('${noteId}','${p.id}')"
-ondragover="event.preventDefault()"
 onclick="openPage('${noteId}','${p.id}')">
   Page ${i+1}
 </div>
+
 `).join("");
 
-openPage(noteId, note.pages[0].id);
+if(note.pages.length){
+  openPage(noteId, note.pages[0].id);
+}
 
 }
 
@@ -351,32 +355,45 @@ window.openPage = async function(noteId, pageId){
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
 if(!note) return;
+
 const page = note.pages.find(p => p.id === pageId);
 if(!page) return;
 
 const editor = document.getElementById("editor");
 
-if(editor){
-  editor.blur(); // ensure previous input event fires
-}
-
+/* load content */
 editor.innerHTML = page.content || "";
-setTimeout(()=> editor.focus(), 0);
 
+/* 🔥 FORCE FOCUS */
+setTimeout(()=>{
+  editor.focus();
+}, 50);
 
+/* 🔥 CLEAR OLD HANDLER */
+editor.oninput = null;
+
+/* 🔥 SAVE LOGIC */
 editor.oninput = async ()=>{
+
   page.content = editor.innerHTML;
 
   const text = editor.innerText.trim();
+
   if(text.length > 3){
     note.title = text.substring(0, 30);
-    document.querySelector(".sidebar-top strong").innerText = note.title;
+
+    const titleEl = document.querySelector(".sidebar-top strong");
+    if(titleEl) titleEl.innerText = note.title;
   }
 
   await saveNote(note);
+
 };
 
 };
+
+
+
 
 
 window.addPage = async function(noteId){
