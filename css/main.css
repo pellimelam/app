@@ -296,11 +296,19 @@ cursor:pointer;
 .editor-area{
 flex:1;
 background:#020617;
-padding:14px;
+min-height:300px;
+padding:15px;
 border-radius:12px;
 outline:none;
 color:white;
 overflow:auto;
+}
+
+
+.editor-area:empty:before{
+content: attr(data-placeholder);
+color:#64748b;
+pointer-events:none;
 }
 
 /* MOBILE */
