@@ -34,8 +34,7 @@ const APP_CONFIG = [
 {
 section: "Utilities",
 apps: [
-{ id: "notes", name: "VID Notes", icon: "📝" }
-]
+{ id: "notes", name: "VID Code", icon: "./icons1/logo.png" }]
 },
 
 /* FUTURE SECTIONS EXAMPLE
@@ -78,7 +77,12 @@ section.apps.forEach(app => {
 html += `
 
 <div class="app-card" onclick="openApp('${app.id}')">
-  <div class="app-icon">${app.icon}</div>
+  <div class="app-icon">
+    ${app.icon.includes(".png") 
+      ? `<img src="${app.icon}" style="width:40px;height:40px;">`
+      : app.icon
+    }
+  </div>
   <div class="app-name">${app.name}</div>
 </div>
 `;
