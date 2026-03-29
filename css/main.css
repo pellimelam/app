@@ -216,6 +216,10 @@ justify-items:center;
 
 .app-card{
 width:90px;
+display:flex;
+flex-direction:column;
+align-items:center;   /* 🔥 FIX: centers icon + text */
+justify-content:center;
 text-align:center;
 cursor:pointer;
 transition:.2s;
@@ -241,6 +245,8 @@ box-shadow:0 10px 25px rgba(0,0,0,.5);
 margin-top:8px;
 font-size:13px;
 color:#cbd5f5;
+width:100%;           /* 🔥 FIX */
+text-align:center;    /* 🔥 FIX */
 }
 
 .app-card.disabled{
