@@ -22,8 +22,8 @@
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Vidhwaan Group">
-<meta name="twitter:description" content="Global ecosystem across AI, Technology and Culture">
+<meta name="twitter:title" content="Vidhwaan Apps – Developer Platform">
+<meta name="twitter:description" content="Developer tools and applications including VID Code for building modern software projects.">
 <link rel="icon" href="./favicon-v2.ico">
 
 <meta name="theme-color" content="#0f172a">
@@ -201,11 +201,30 @@ Vidhwaan Foundation Platform
 <script>
 /* HANDLE REDIRECT FROM 404 */
 (function(){
+
   const redirect = sessionStorage.redirect;
-  if(redirect){
+
+  if(redirect && redirect !== location.pathname){
+
     sessionStorage.removeItem("redirect");
-    history.replaceState(null, "", redirect);
+
+    try{
+      history.replaceState(null, "", redirect);
+    }catch(e){
+      console.warn("Redirect failed:", e);
+    }
+
   }
+
+})();
+
+/* 🔥 FORCE /app ENTRY (ADD HERE) */
+(function(){
+
+  if(location.pathname === "/"){
+    history.replaceState(null, "", "/app");
+  }
+
 })();
 </script>
 
