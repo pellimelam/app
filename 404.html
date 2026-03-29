@@ -5,15 +5,19 @@
 
 <script>
 /* =========================
-SPA ROUTING FIX (FINAL)
+SPA ROUTING FIX (FINAL - PRODUCTION SAFE)
 ========================= */
 
-/* store full original URL */
-sessionStorage.redirect = location.pathname + location.search + location.hash;
+(function(){
 
-/* 🔥 CRITICAL: always go to /app root (NOT index.html) */
-location.replace("/app/");
+  // Capture full original path
+  var path = location.pathname + location.search + location.hash;
 
+  // 🔥 Redirect to /app with encoded path
+  // This preserves deep routes like /app/notes
+  location.replace("/app/?redirect=" + encodeURIComponent(path));
+
+})();
 </script>
 
 </head>
