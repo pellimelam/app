@@ -1,186 +1,187 @@
 /* =========================
-APP ROUTER
+APP ROUTER (WORLD-CLASS)
 ========================= */
 
 function navigateToApp(appId){
-history.pushState({ appId }, "", `/app/${appId}`);
+  history.pushState({ appId }, "", `/app/${appId}`);
 }
 
 function navigateHome(){
-history.pushState({}, "", `/`);
+  history.pushState({}, "", `/app`);
 }
 
+/* =========================
+ROUTE RESOLVER (CORE FIX)
+========================= */
 
+function resolveApp(){
 
+  let path = window.location.pathname;
+
+  let clean = path.replace(/^\/+|\/+$/g, "");
+
+  if(clean.startsWith("app")){
+    clean = clean.slice(3);
+  }
+
+  clean = clean.replace(/^\/+/, "");
+  clean = clean.replace(/index\.html$/, "");
+
+  if(!clean || clean === "/"){
+    return null;
+  }
+
+  const appId = clean.split("/")[0];
+
+  if(APP_LOADERS[appId]){
+    return appId;
+  }
+
+  return null;
+}
 
 /* =========================
 DYNAMIC APP LOADER
 ========================= */
 
 const APP_LOADERS = {
-notes: () => import("./apps/notes.js"),
+  notes: () => import("./apps/notes.js"),
 
-/* FUTURE
-chat: () => import("./apps/chat.js"),
-crm: () => import("./apps/crm.js"),
-*/
+  /* FUTURE
+  chat: () => import("./apps/chat.js"),
+  crm: () => import("./apps/crm.js"),
+  */
 };
 
-
-
+/* =========================
+APP CONFIG (UI)
+========================= */
 
 const APP_CONFIG = [
-
-{
-section: "Utilities",
-apps: [
-{ id: "notes", name: "VID Code", icon: "./icons1/logo.png" }]
-},
-
-/* FUTURE SECTIONS EXAMPLE
-
-{
-section: "AI Tools",
-apps: [
-{ id: "chat", name: "AI Chat", icon: "🤖" }
-]
-},
-
-{
-section: "Business",
-apps: [
-{ id: "crm", name: "CRM", icon: "📊" }
-]
-}
-
-*/
-
+  {
+    section: "Utilities",
+    apps: [
+      { id: "notes", name: "VID Code", icon: "./icons1/logo.png" }
+    ]
+  }
 ];
+
+/* =========================
+RENDER APP LIST
+========================= */
 
 export function loadApps(){
 
-let html = `<section class="section"><div class="container">`;
+  let html = `<section class="section"><div class="container">`;
 
-APP_CONFIG.forEach(section => {
+  APP_CONFIG.forEach(section => {
 
-html += `
+    html += `
+    <div class="apps-section">
+      <h2 class="apps-section-title">${section.section}</h2>
+      <div class="apps-grid">
+    `;
 
-<div class="apps-section">
+    section.apps.forEach(app => {
 
-<h2 class="apps-section-title">${section.section}</h2>
+      html += `
+      <div class="app-card" onclick="openApp('${app.id}')">
+        <div class="app-icon">
+          ${app.icon.includes(".png") 
+            ? `<img src="${app.icon}" style="width:40px;height:40px;">`
+            : app.icon
+          }
+        </div>
+        <div class="app-name">${app.name}</div>
+      </div>
+      `;
 
-<div class="apps-grid">
-`;
+    });
 
-section.apps.forEach(app => {
+    html += `</div></div>`;
+  });
 
-html += `
+  html += `</div></section>`;
 
-<div class="app-card" onclick="openApp('${app.id}')">
-  <div class="app-icon">
-    ${app.icon.includes(".png") 
-      ? `<img src="${app.icon}" style="width:40px;height:40px;">`
-      : app.icon
-    }
-  </div>
-  <div class="app-name">${app.name}</div>
-</div>
-`;
-
-});
-
-html += `</div></div>`;
-
-});
-
-html += `</div></section>
-
-
-`;
-
-document.getElementById("utilities").innerHTML = html;
-
+  document.getElementById("utilities").innerHTML = html;
 }
 
+/* =========================
+APP LOADER ENGINE
+========================= */
 
 window.__apps_loaded = window.__apps_loaded || {};
 
 window.openApp = async function(appId, options = {}){
 
-const { skipPush = false } = options;
+  const { skipPush = false } = options;
 
-const loader = APP_LOADERS[appId];
+  const loader = APP_LOADERS[appId];
 
-if(!loader){
-  console.error("App not found:", appId);
-  return;
-}
+  if(!loader){
+    console.error("App not found:", appId);
+    return;
+  }
 
-/* URL UPDATE */
-if(!skipPush){
-  navigateToApp(appId);
-}
+  /* URL UPDATE */
+  if(!skipPush){
+    navigateToApp(appId);
+  }
 
-/* UI SWITCH */
-document.getElementById("utilities").style.display = "none";
-document.getElementById("appView").style.display = "block";
+  /* UI SWITCH */
+  document.getElementById("utilities").style.display = "none";
+  document.getElementById("appView").style.display = "block";
 
-/* 🔥 LOAD ONLY ONCE (CRITICAL FIX) */
-if(!window.__apps_loaded[appId]){
-  await loader();
-  window.__apps_loaded[appId] = true;
-}
+  /* LOAD ONLY ONCE */
+  if(!window.__apps_loaded[appId]){
+    await loader();
+    window.__apps_loaded[appId] = true;
+  }
 
-/* OPEN APP */
-if(window.__apps && window.__apps[appId]){
-  window.__apps[appId]();
-}
+  /* RUN APP */
+  if(window.__apps && window.__apps[appId]){
+    window.__apps[appId]();
+  }
 
 };
 
-
+/* =========================
+BACK TO HOME
+========================= */
 
 window.backToList = function(){
 
-document.getElementById("appView").style.display = "none";
-document.getElementById("utilities").style.display = "block";
+  document.getElementById("appView").style.display = "none";
+  document.getElementById("utilities").style.display = "block";
 
-navigateHome();
-
+  navigateHome();
 };
 
-
-
 /* =========================
-INITIAL ROUTE LOAD
+ROUTE HANDLER (INITIAL LOAD)
 ========================= */
 
-window.addEventListener("DOMContentLoaded", async ()=>{
+async function handleRoute(){
 
-const path = window.location.pathname;
+  const appId = resolveApp();
 
-if(path.startsWith("/app/")){
-  const appId = path.split("/app/")[1];
-
-  if(APP_LOADERS[appId]){
+  if(appId){
     await window.openApp(appId, { skipPush: true });
+  }else{
+    document.getElementById("appView").style.display = "none";
+    document.getElementById("utilities").style.display = "block";
   }
+
 }
 
-});
+/* =========================
+INITIAL LOAD
+========================= */
 
+window.addEventListener("DOMContentLoaded", handleRoute);
 
+/* =========================
+BACK / FORWARD NAVIGATION
+========================= */
 
-window.addEventListener("popstate", async (e)=>{
-
-const path = window.location.pathname;
-
-if(path.startsWith("/app/")){
-const appId = path.split("/app/")[1];
-await window.openApp(appId, { skipPush: true });
-}else{
-document.getElementById("appView").style.display = "none";
-document.getElementById("utilities").style.display = "block";
-}
-
-});
+window.addEventListener("popstate", handleRoute);
