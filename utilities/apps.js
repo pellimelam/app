@@ -13,32 +13,30 @@ function navigateHome(){
 /* =========================
 ROUTE RESOLVER (CORE FIX)
 ========================= */
-
 function resolveApp(){
 
   let path = window.location.pathname;
 
-  let clean = path.replace(/^\/+|\/+$/g, "");
+  // normalize trailing slash
+  path = path.replace(/\/+$/, "");
 
-  if(clean.startsWith("app")){
-    clean = clean.slice(3);
-  }
-
-  clean = clean.replace(/^\/+/, "");
-  clean = clean.replace(/index\.html$/, "");
-
-  if(!clean || clean === "/"){
+  // only allow /app or /app/*
+  if(!path.startsWith("/app")){
     return null;
   }
 
-  const appId = clean.split("/")[0];
+  const parts = path.split("/").filter(Boolean);
 
-  if(APP_LOADERS[appId]){
-    return appId;
+  // /app → home
+  if(parts.length === 1){
+    return null;
   }
 
-  return null;
+  const appId = parts[1];
+
+  return APP_LOADERS[appId] ? appId : null;
 }
+
 
 /* =========================
 DYNAMIC APP LOADER
@@ -165,13 +163,26 @@ async function handleRoute(){
 
   const appId = resolveApp();
 
-  if(appId){
-    await window.openApp(appId, { skipPush: true });
-  }else{
-    document.getElementById("appView").style.display = "none";
-    document.getElementById("utilities").style.display = "block";
-  }
+  try{
 
+    if(appId){
+      await window.openApp(appId, { skipPush: true });
+    }else{
+      document.getElementById("appView").style.display = "none";
+      document.getElementById("utilities").style.display = "block";
+    }
+
+  }catch(e){
+
+    console.error("ROUTE ERROR:", e);
+
+    document.getElementById("appView").innerHTML = `
+      <div style="padding:20px;text-align:center;">
+        <h2>Something went wrong</h2>
+        <button onclick="location.href='/app'">Go Home</button>
+      </div>
+    `;
+  }
 }
 
 /* =========================
