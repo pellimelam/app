@@ -199,18 +199,30 @@ Vidhwaan Foundation Platform
 
 
 <script>
-/* HANDLE REDIRECT FROM 404 */
+<script>
+/* =========================
+SAFE ROUTE RESTORE (NO RELOAD)
+========================= */
+
 (function(){
 
   const params = new URLSearchParams(window.location.search);
   const redirect = params.get("redirect");
 
-  // 🚨 prevent infinite loop
-  if(redirect && !redirect.includes("redirect=")){
-    history.replaceState(null, "", redirect);
+  // ✅ Only restore ONCE, no reload
+  if(redirect){
+
+    // prevent loop
+    if(!redirect.includes("redirect=")){
+      history.replaceState(null, "", redirect);
+    }else{
+      history.replaceState(null, "", "/app");
+    }
+
   }
 
 })();
+</script>
 
 
 
