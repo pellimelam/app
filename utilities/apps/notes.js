@@ -1,3 +1,6 @@
+let __currentNoteId = null;
+
+
 /* =========================
 APP REGISTRY
 ========================= */
@@ -101,7 +104,7 @@ view.innerHTML = `
   <button class="btn btn-outline" onclick="backToList()">←</button>
 
   <!-- CENTER: TITLE -->
-  <h2 style="margin:0;text-align:center;flex:1;">VID Notes</h2>
+  <h2 style="margin:0;text-align:center;flex:1;">Notes</h2>
 
   <!-- RIGHT: NEW -->
   <button class="btn btn-primary" onclick="createNote()">+ New</button>
@@ -255,6 +258,8 @@ OPEN NOTE (PAGES UI)
 
 window.openNote = async function(id){
 
+__currentNoteId = id;
+
 if(location.hash !== "#pages"){
   history.pushState({ screen: "pages" }, "", "#pages");
 }
@@ -274,10 +279,14 @@ view.innerHTML = `
 
 <div class="container">
 
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
+
     <button class="btn btn-outline" onclick="history.back()">←</button>
-    <h2>${note.title || "Note"}</h2>
+
+    <h2 style="margin:0;text-align:center;flex:1;">${note.title || "Note"}</h2>
+
     <button class="btn btn-primary" onclick="addPage('${note.id}')">+ Page</button>
+
   </div>
 
   <input id="searchPages" placeholder="Search pages..." style="
@@ -529,24 +538,54 @@ view.innerHTML = `
     <button onclick="changeFontSize(-2)">A-</button>
   </div>
 
-  <div id="editor" contenteditable="true"
-       class="editor-area"
-       style="min-height:70vh; height:auto;">
-  </div>
+  <div id="editor" style="height:70vh;border-radius:12px;overflow:hidden;"></div>
 
 </div>
 `;
 
-const editor = document.getElementById("editor");
 
-editor.innerHTML = page.content || "";
+if(!window.__monaco_loaded){
+  window.__monaco_loaded = true;
 
-setTimeout(()=> editor.focus(), 50);
+  require.config({ paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs" } });
+}
 
-editor.oninput = async ()=>{
-  page.content = editor.innerHTML;
-  await saveNote(note);
-};
+require(["vs/editor/editor.main"], function(){
+
+  const ext = (page.name || "").split(".").pop().toLowerCase();
+
+  const langMap = {
+    js: "javascript",
+    html: "html",
+    css: "css",
+    json: "json",
+    py: "python",
+    md: "markdown",
+    yml: "yaml",
+    yaml: "yaml"
+  };
+
+  const language = langMap[ext] || "plaintext";
+
+  if(window.__editor){
+    window.__editor.dispose();
+  }
+
+  window.__editor = monaco.editor.create(document.getElementById("editor"), {
+    value: page.content || "",
+    language: language,
+    theme: "vs-dark",
+    automaticLayout: true,
+    fontSize: 14
+  });
+
+  window.__editor.onDidChangeModelContent(async ()=>{
+    page.content = window.__editor.getValue();
+    await saveNote(note);
+  });
+
+});
+
 
 };
 
@@ -647,10 +686,19 @@ window.exportNote = async function(id){
       .replace(/\n{3,}/g, "\n\n")
       .trim();
 
-    const fileName = (page.name || `Page_${i+1}`)
-      .replace(/[^\w\d]/g, "_") + ".txt";
+    const meta = getFileMeta(page.name || `Page_${i+1}`);
+    const path = meta.fileName.split("/").filter(Boolean);
 
-    zip.file(fileName, content);
+    // create nested folders
+    let folder = zip;
+
+    for(let j = 0; j < path.length - 1; j++){
+      folder = folder.folder(path[j]);
+    }
+
+    folder.file(path[path.length - 1], content);
+
+ 
   }
 
   const blob = await zip.generateAsync({ type: "blob" });
@@ -661,6 +709,100 @@ window.exportNote = async function(id){
   a.click();
 
 };
+
+
+
+
+function getFileMeta(name){
+
+  let clean = (name || "file").trim();
+
+  // Handle special filenames (no extension)
+  const specialFiles = [
+    "Dockerfile",
+    ".env",
+    ".gitignore",
+    ".dockerignore",
+    "Makefile",
+    "README"
+  ];
+
+  if(specialFiles.includes(clean)){
+    return {
+      fileName: clean,
+      mime: "text/plain"
+    };
+  }
+
+  // Extract extension
+  const match = clean.match(/\.([a-zA-Z0-9]+)$/);
+
+  let ext = match ? match[1].toLowerCase() : "";
+
+  // If no extension → default .txt
+  if(!ext){
+    return {
+      fileName: clean + ".txt",
+      mime: "text/plain"
+    };
+  }
+
+  // Known MIME types (extended for dev)
+  const mimeMap = {
+
+    // Web
+    js: "application/javascript",
+    mjs: "application/javascript",
+    html: "text/html",
+    css: "text/css",
+
+    // Data
+    json: "application/json",
+    xml: "application/xml",
+    csv: "text/csv",
+
+    // Config
+    yml: "text/yaml",
+    yaml: "text/yaml",
+    toml: "text/plain",
+    ini: "text/plain",
+
+    // Programming
+    py: "text/x-python",
+    java: "text/x-java",
+    c: "text/x-c",
+    cpp: "text/x-c",
+    cs: "text/plain",
+    go: "text/plain",
+    rs: "text/plain",
+    php: "text/x-php",
+    rb: "text/plain",
+
+    // Scripts
+    sh: "text/x-shellscript",
+    bash: "text/x-shellscript",
+
+    // Docs
+    md: "text/markdown",
+    txt: "text/plain",
+
+    // DevOps
+    dockerfile: "text/plain",
+
+    // Misc
+    env: "text/plain"
+  };
+
+  return {
+    fileName: clean,
+    mime: mimeMap[ext] || "text/plain"
+  };
+}
+
+
+
+
+
 
 
 
@@ -715,11 +857,13 @@ const content = text
 
 
 
-const blob = new Blob([content], { type: "text/plain" });
+const meta = getFileMeta(page.name);
+
+const blob = new Blob([content], { type: meta.mime });
 
 const a = document.createElement("a");
 a.href = URL.createObjectURL(blob);
-a.download = (page.name || "page") + ".txt";
+a.download = meta.fileName;
 a.click();
 
 };
@@ -739,8 +883,8 @@ window.addEventListener("popstate", async ()=>{
   // BACK TO PAGES (FIXED)
   if(hash === "#pages"){
     const notes = await getNotes();
-    if(notes.length){
-      openNote(notes[0].id);
+    if(__currentNoteId){
+      openNote(__currentNoteId);
     }else{
       loadNotesApp();
     }
