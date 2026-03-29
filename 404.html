@@ -2,11 +2,20 @@
 <html>
 <head>
 <meta charset="UTF-8">
+
 <script>
-/* REDIRECT ALL ROUTES BACK TO INDEX */
-sessionStorage.redirect = location.pathname;
-location.replace("/app/index.html");
+/* =========================
+SPA ROUTING FIX (FINAL)
+========================= */
+
+/* store full original URL */
+sessionStorage.redirect = location.pathname + location.search + location.hash;
+
+/* 🔥 CRITICAL: always go to /app root (NOT index.html) */
+location.replace("/app/");
+
 </script>
+
 </head>
 <body></body>
 </html>
