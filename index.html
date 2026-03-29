@@ -199,9 +199,8 @@ Vidhwaan Foundation Platform
 
 
 <script>
-<script>
 /* =========================
-SAFE ROUTE RESTORE (NO RELOAD)
+SAFE ROUTE RESTORE (FINAL)
 ========================= */
 
 (function(){
@@ -209,23 +208,25 @@ SAFE ROUTE RESTORE (NO RELOAD)
   const params = new URLSearchParams(window.location.search);
   const redirect = params.get("redirect");
 
-  // ✅ Only restore ONCE, no reload
   if(redirect){
 
-    // prevent loop
-    if(!redirect.includes("redirect=")){
-      history.replaceState(null, "", redirect);
-    }else{
+    try{
+      const decoded = decodeURIComponent(redirect);
+
+      // 🚨 prevent loop
+      if(!decoded.includes("redirect=")){
+        history.replaceState(null, "", decoded);
+      }else{
+        history.replaceState(null, "", "/app");
+      }
+
+    }catch(e){
       history.replaceState(null, "", "/app");
     }
 
   }
 
 })();
-</script>
-
-
-
 </script>
 
 
