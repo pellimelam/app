@@ -202,13 +202,12 @@ Vidhwaan Foundation Platform
 /* HANDLE REDIRECT FROM 404 */
 (function(){
 
-  const redirect = sessionStorage.redirect;
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get("redirect");
 
-  if(redirect){
-    sessionStorage.removeItem("redirect");
-
-    // 🔥 HARD REDIRECT (FIXES BLANK SCREEN)
-    window.location.replace(redirect);
+  // 🚨 prevent infinite loop
+  if(redirect && !redirect.includes("redirect=")){
+    history.replaceState(null, "", redirect);
   }
 
 })();
