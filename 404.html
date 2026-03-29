@@ -5,21 +5,21 @@
 
 <script>
 /* =========================
-SPA SAFE REDIRECT (NO LOOP)
+SPA REDIRECT (FINAL - NO LOOP)
 ========================= */
 
 (function(){
 
-  var path = location.pathname + location.search + location.hash;
+  var path = location.pathname;
 
-  // 🚨 stop recursive redirect
-  if(path.includes("redirect=")){
-    location.replace("/app/");
+  // 🔥 IMPORTANT: only redirect real deep routes
+  if(path.startsWith("/app/") && path !== "/app/"){
+    location.replace("/app/?redirect=" + encodeURIComponent(path));
     return;
   }
 
-  // ✅ redirect once
-  location.replace("/app/?redirect=" + encodeURIComponent(path));
+  // fallback
+  location.replace("/app/");
 
 })();
 </script>
