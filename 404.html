@@ -5,16 +5,20 @@
 
 <script>
 /* =========================
-SPA ROUTING FIX (FINAL - PRODUCTION SAFE)
+SPA ROUTING FIX (NO LOOP)
 ========================= */
 
 (function(){
 
-  // Capture full original path
   var path = location.pathname + location.search + location.hash;
 
-  // 🔥 Redirect to /app with encoded path
-  // This preserves deep routes like /app/notes
+  // 🚨 STOP LOOP: if already has redirect, do nothing
+  if(path.includes("redirect=")){
+    location.replace("/app/");
+    return;
+  }
+
+  // ✅ Single clean redirect
   location.replace("/app/?redirect=" + encodeURIComponent(path));
 
 })();
