@@ -5,20 +5,20 @@
 
 <script>
 /* =========================
-SPA ROUTING FIX (NO LOOP)
+SPA SAFE REDIRECT (NO LOOP)
 ========================= */
 
 (function(){
 
   var path = location.pathname + location.search + location.hash;
 
-  // 🚨 STOP LOOP: if already has redirect, do nothing
+  // 🚨 stop recursive redirect
   if(path.includes("redirect=")){
     location.replace("/app/");
     return;
   }
 
-  // ✅ Single clean redirect
+  // ✅ redirect once
   location.replace("/app/?redirect=" + encodeURIComponent(path));
 
 })();
