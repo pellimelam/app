@@ -204,28 +204,17 @@ Vidhwaan Foundation Platform
 
   const redirect = sessionStorage.redirect;
 
-  if(redirect && redirect !== location.pathname){
-
+  if(redirect){
     sessionStorage.removeItem("redirect");
 
-    try{
-      history.replaceState(null, "", redirect);
-    }catch(e){
-      console.warn("Redirect failed:", e);
-    }
-
+    // 🔥 HARD REDIRECT (FIXES BLANK SCREEN)
+    window.location.replace(redirect);
   }
 
 })();
 
-/* 🔥 FORCE /app ENTRY (ADD HERE) */
-(function(){
 
-  if(location.pathname === "/"){
-    history.replaceState(null, "", "/app");
-  }
 
-})();
 </script>
 
 
