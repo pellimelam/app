@@ -121,28 +121,53 @@ window.openApp = async function(appId, options = {}){
     return;
   }
 
-  /* URL UPDATE */
-  if(!skipPush){
-    navigateToApp(appId);
+  try{
+
+    /* URL UPDATE */
+    if(!skipPush){
+      navigateToApp(appId);
+    }
+
+    const utilities = document.getElementById("utilities");
+    const appView = document.getElementById("appView");
+
+    /* UI SWITCH */
+    utilities.style.display = "none";
+    appView.style.display = "block";
+
+    /* 🔥 PREVENT BLANK SCREEN */
+    appView.innerHTML = `
+      <div style="padding:40px;text-align:center;">
+        <p>Loading ${appId}...</p>
+      </div>
+    `;
+
+    /* LOAD APP */
+    if(!window.__apps_loaded[appId]){
+      await loader();
+      window.__apps_loaded[appId] = true;
+    }
+
+    /* 🔥 ENSURE APP EXISTS */
+    if(!window.__apps || !window.__apps[appId]){
+      throw new Error("App not initialized");
+    }
+
+    /* RUN APP */
+    await window.__apps[appId]();
+
+  }catch(e){
+
+    console.error("APP LOAD ERROR:", e);
+
+    document.getElementById("appView").innerHTML = `
+      <div style="padding:20px;text-align:center;">
+        <h2>Failed to load app</h2>
+        <button onclick="location.href='/app'">Go Home</button>
+      </div>
+    `;
   }
-
-  /* UI SWITCH */
-  document.getElementById("utilities").style.display = "none";
-  document.getElementById("appView").style.display = "block";
-
-  /* LOAD ONLY ONCE */
-  if(!window.__apps_loaded[appId]){
-    await loader();
-    window.__apps_loaded[appId] = true;
-  }
-
-  /* RUN APP */
-  if(window.__apps && window.__apps[appId]){
-    window.__apps[appId]();
-  }
-
 };
-
 /* =========================
 BACK TO HOME
 ========================= */
