@@ -810,87 +810,82 @@ function getFileMeta(name){
 
 window.downloadPage = async function(noteId, pageId){
 
-const notes = await getNotes();
-const note = notes.find(n => n.id === noteId);
-if(!note){
-  backToList();
-  return;
-}
-
-const page = note.pages.find(p => p.id === pageId);
-if(!page) return;
-
-const temp = document.createElement("div");
-temp.innerHTML = page.content || "";
-
-/* convert block elements to proper spacing */
-const blockTags = ["DIV", "P", "BR"];
-
-let text = "";
-
-function parseNode(node){
-  if(node.nodeType === Node.TEXT_NODE){
-    text += node.nodeValue;
+  const notes = await getNotes();
+  const note = notes.find(n => n.id === noteId);
+  if(!note){
+    backToList();
+    return;
   }
 
-  if(node.nodeType === Node.ELEMENT_NODE){
+  const page = note.pages.find(p => p.id === pageId);
+  if(!page) return;
 
-    if(node.tagName === "BR"){
-      text += "\n";
+  // convert HTML → text
+  const temp = document.createElement("div");
+  temp.innerHTML = page.content || "";
+
+  let text = "";
+
+  function parseNode(node){
+    if(node.nodeType === Node.TEXT_NODE){
+      text += node.nodeValue;
     }
 
-    node.childNodes.forEach(parseNode);
+    if(node.nodeType === Node.ELEMENT_NODE){
 
-    if(blockTags.includes(node.tagName)){
-      text += "\n";
+      if(node.tagName === "BR"){
+        text += "\n";
+      }
+
+      node.childNodes.forEach(parseNode);
+
+      if(["DIV","P"].includes(node.tagName)){
+        text += "\n";
+      }
     }
   }
-}
 
-temp.childNodes.forEach(parseNode);
+  temp.childNodes.forEach(parseNode);
 
-/* preserve spacing properly */
-const content = text
-  .replace(/\n{3,}/g, "\n\n")   // limit extra breaks
-  .replace(/[ \t]{2,}/g, " ")   // normalize spaces slightly
-  .trim();
+  const content = text
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
+  const meta = getFileMeta(page.name);
+  const path = meta.fileName.split("/").filter(Boolean);
 
+  /* ✅ SINGLE FILE */
+  if(path.length === 1){
 
-const meta = getFileMeta(page.name);
+    const blob = new Blob([content], { type: meta.mime });
 
-const path = meta.fileName.split("/").filter(Boolean);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = meta.fileName;
+    a.click();
 
-/* ✅ SINGLE FILE → direct download */
-if(path.length === 1){
+    return;
+  }
 
-  const blob = new Blob([content], { type: meta.mime });
+  /* ✅ FOLDER → ZIP */
+  const zip = new JSZip();
+
+  let folder = zip;
+
+  for(let i = 0; i < path.length - 1; i++){
+    folder = folder.folder(path[i]);
+  }
+
+  folder.file(path[path.length - 1], content);
+
+  const blob = await zip.generateAsync({ type: "blob" });
 
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = meta.fileName;
+  a.download = path[path.length - 1] + ".zip";
   a.click();
 
-  return;
-}
-
-/* ✅ HAS FOLDER → ZIP */
-const zip = new JSZip();
-
-let folder = zip;
-
-for(let i = 0; i < path.length - 1; i++){
-  folder = folder.folder(path[i]);
-}
-
-folder.file(path[path.length - 1], content);
-
-const blob = await zip.generateAsync({ type: "blob" });
-
-const a = document.createElement("a");
-a.href = URL.createObjectURL(blob);
-a.download = path[path.length - 1] + ".zip";
-a.click();
+};
 
 
 
