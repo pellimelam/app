@@ -2,28 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8">
-
 <script>
 /* =========================
-SPA REDIRECT (FINAL - NO LOOP)
+FINAL SAFE FALLBACK
 ========================= */
 
-(function(){
+// 🔥 Always go to home (NO loops, NO redirect params)
+location.replace("/");
 
-  var path = location.pathname;
-
-  // 🔥 IMPORTANT: only redirect real deep routes
-  if(path.startsWith("/app/") && path !== "/app/"){
-    location.replace("/app/?redirect=" + encodeURIComponent(path));
-    return;
-  }
-
-  // fallback
-  location.replace("/app/");
-
-})();
 </script>
-
 </head>
 <body></body>
 </html>
