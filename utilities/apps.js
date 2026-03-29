@@ -34,7 +34,7 @@ const APP_CONFIG = [
 {
 section: "Utilities",
 apps: [
-{ id: "notes", name: "VID Code", icon: "./icons1/logo.png" }]
+{ id: "notes", name: "Code Editor", icon: "./icons1/logo.png" }]
 },
 
 /* FUTURE SECTIONS EXAMPLE
