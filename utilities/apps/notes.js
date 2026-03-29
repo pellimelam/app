@@ -104,7 +104,7 @@ view.innerHTML = `
   <button class="btn btn-outline" onclick="backToList()">←</button>
 
   <!-- CENTER: TITLE -->
-  <h2 style="margin:0;text-align:center;flex:1;">Notes</h2>
+  <h2 style="margin:0;text-align:center;flex:1;">VID Code</h2>
 
   <!-- RIGHT: NEW -->
   <button class="btn btn-primary" onclick="createNote()">+ New</button>
@@ -199,10 +199,10 @@ window.createNote = async function(){
 
 const newNote = {
   id: Date.now().toString(),
-  title: "New Note",
+  title: "New Project",
   pinned: false,
   folder: "default",
-  pages: [{ id: Date.now().toString(), name: "New Page", content: "", pinned: false }]
+  pages: [{ id: Date.now().toString(), name: "main.txt", content: "", pinned: false }]
 };
 
 await saveNote(newNote);
@@ -604,7 +604,7 @@ if(!note){
 
 note.pages.unshift({
   id: Date.now().toString(),
-  name: "New Page",
+  name: "main.txt",
   content: "",
   pinned: false
 });
