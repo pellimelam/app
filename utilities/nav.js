@@ -19,6 +19,7 @@ const nav = `
 
 <nav class="nav-links" id="navLinks">
 
+<a href="https://apps.vidhwaan.com">Apps</a>
 <a href="https://pellimelam.vidhwaan.com">PelliMelam</a>
 <a href="https://ai.vidhwaan.com">AI</a>
 <a href="https://tech.vidhwaan.com">Technology</a>
