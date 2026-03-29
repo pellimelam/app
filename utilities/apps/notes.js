@@ -859,14 +859,40 @@ const content = text
 
 const meta = getFileMeta(page.name);
 
-const blob = new Blob([content], { type: meta.mime });
+const path = meta.fileName.split("/").filter(Boolean);
+
+/* ✅ SINGLE FILE → direct download */
+if(path.length === 1){
+
+  const blob = new Blob([content], { type: meta.mime });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = meta.fileName;
+  a.click();
+
+  return;
+}
+
+/* ✅ HAS FOLDER → ZIP */
+const zip = new JSZip();
+
+let folder = zip;
+
+for(let i = 0; i < path.length - 1; i++){
+  folder = folder.folder(path[i]);
+}
+
+folder.file(path[path.length - 1], content);
+
+const blob = await zip.generateAsync({ type: "blob" });
 
 const a = document.createElement("a");
 a.href = URL.createObjectURL(blob);
-a.download = meta.fileName;
+a.download = path[path.length - 1] + ".zip";
 a.click();
 
-};
+
 
 
 
