@@ -170,22 +170,23 @@ if(notes.length === 0){
 }
 
 container.innerHTML = notes.map(n => `
-<div class="card" style="margin-bottom:12px;">
-  <div style="display:flex;justify-content:space-between;">
-    
-    <div style="flex:1;cursor:pointer;" onclick="event.stopPropagation(); openNote('${n.id}')">
-      ${n.pinned ? "📌 " : ""}
-      <strong>${n.title || "Untitled"}</strong>
-    </div>
+<div class="card" style="margin-bottom:12px;padding:12px;">
 
-    <div>
-      <button onclick="event.stopPropagation(); togglePin('${n.id}')">📌</button>
-      <button onclick="event.stopPropagation(); renameNote('${n.id}')">✏️</button>
-      <button onclick="event.stopPropagation(); deleteNote('${n.id}')">🗑️</button>
-      <button onclick="event.stopPropagation(); exportNote('${n.id}')">Export</button>
-    </div>
-
+  <!-- TITLE -->
+  <div style="cursor:pointer;word-break:break-word;margin-bottom:8px;"
+       onclick="event.stopPropagation(); openNote('${n.id}')">
+    ${n.pinned ? "📌 " : ""}
+    <strong>${n.title || "Untitled"}</strong>
   </div>
+
+  <!-- ACTIONS -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    <button onclick="event.stopPropagation(); togglePin('${n.id}')">📌</button>
+    <button onclick="event.stopPropagation(); renameNote('${n.id}')">✏️</button>
+    <button onclick="event.stopPropagation(); deleteNote('${n.id}')">🗑️</button>
+    <button onclick="event.stopPropagation(); exportNote('${n.id}')">Export</button>
+  </div>
+
 </div>
 `).join("");
 
@@ -383,22 +384,23 @@ if(pages.length === 0){
 }
 
 list.innerHTML = pages.map(p => `
-<div class="card" style="margin-bottom:12px;">
-  <div style="display:flex;justify-content:space-between;">
-    
-    <div style="flex:1;cursor:pointer;" onclick="event.stopPropagation(); openPage('${noteId}','${p.id}')">
-      ${p.pinned ? "📌 " : ""}
-      <strong>${p.name || "Untitled"}</strong>
-    </div>
+<div class="card" style="margin-bottom:12px;padding:12px;">
 
-    <div>
-      <button onclick="event.stopPropagation(); togglePagePin('${noteId}','${p.id}')">📌</button>
-      <button onclick="event.stopPropagation(); renamePage('${noteId}','${p.id}')">✏️</button>
-      <button onclick="event.stopPropagation(); deletePage('${noteId}','${p.id}')">🗑️</button>
-      <button onclick="event.stopPropagation(); downloadPage('${noteId}','${p.id}')">Export</button>
-    </div>
-
+  <!-- TITLE -->
+  <div style="cursor:pointer;word-break:break-word;margin-bottom:8px;"
+       onclick="event.stopPropagation(); openPage('${noteId}','${p.id}')">
+    ${p.pinned ? "📌 " : ""}
+    <strong>${p.name || "Untitled"}</strong>
   </div>
+
+  <!-- ACTIONS -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    <button onclick="event.stopPropagation(); togglePagePin('${noteId}','${p.id}')">📌</button>
+    <button onclick="event.stopPropagation(); renamePage('${noteId}','${p.id}')">✏️</button>
+    <button onclick="event.stopPropagation(); deletePage('${noteId}','${p.id}')">🗑️</button>
+    <button onclick="event.stopPropagation(); downloadPage('${noteId}','${p.id}')">Export</button>
+  </div>
+
 </div>
 `).join("");
 
@@ -456,7 +458,7 @@ const name = prompt("Page name", page.name || "");
 
 if(!name) return;
 
-page.name = name.substring(0, 30);
+page.name = name.substring(0, 200);
 
 await saveNote(note);
 
