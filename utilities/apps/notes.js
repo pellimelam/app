@@ -1,8 +1,5 @@
 let __currentNoteId = null;
 
-let draggedNoteId = null;
-let draggedPageId = null;
-
 
 /* =========================
 APP REGISTRY
@@ -173,11 +170,7 @@ if(notes.length === 0){
 }
 
 container.innerHTML = notes.map(n => `
-<div class="card" data-id="${n.id}"
-     style="margin-bottom:12px;padding:12px;">
-
-
-
+<div class="card" style="margin-bottom:12px;padding:12px;">
 
   <!-- TITLE -->
   <div style="cursor:pointer;word-break:break-word;margin-bottom:8px;"
@@ -197,54 +190,7 @@ container.innerHTML = notes.map(n => `
 </div>
 `).join("");
 
-enableDrag("notesList", null, async (order) => {
-
-  let notes = await getNotes();
-
-  notes.sort((a,b)=> order.indexOf(a.id) - order.indexOf(b.id));
-
-  for(const n of notes){
-    await saveNote(n);
-  }
-
-});
-
-
-
 }
-
-
-
-
-
-
-
-window.dragNoteStart = function(e, id){
-  draggedNoteId = id;
-  e.dataTransfer.setData("text/plain", id);
-};
-
-window.dropNote = async function(targetId){
-
-  if(!draggedNoteId || draggedNoteId === targetId) return;
-
-  let notes = await getNotes();
-
-  const from = notes.findIndex(n => n.id === draggedNoteId);
-  const to = notes.findIndex(n => n.id === targetId);
-
-  const [moved] = notes.splice(from, 1);
-  notes.splice(to, 0, moved);
-
-  for(const note of notes){
-    await saveNote(note);
-  }
-
-  draggedNoteId = null;
-
-  await renderNotes();
-};
-
 
 /* =========================
 CREATE NOTE (MULTI PAGE)
@@ -438,12 +384,7 @@ if(pages.length === 0){
 }
 
 list.innerHTML = pages.map(p => `
-<div class="card" data-id="${p.id}"
-     style="margin-bottom:12px;padding:12px;">
-
-
-
-
+<div class="card" style="margin-bottom:12px;padding:12px;">
 
   <!-- TITLE -->
   <div style="cursor:pointer;word-break:break-word;margin-bottom:8px;"
@@ -464,36 +405,17 @@ list.innerHTML = pages.map(p => `
 `).join("");
 
 
-enableDrag("pagesList", null, async (order) => {
-
-  const notes = await getNotes();
-  const note = notes.find(n => n.id === noteId);
-  if(!note) return;
-
-  note.pages.sort((a,b)=> order.indexOf(a.id) - order.indexOf(b.id));
-
-  await saveNote(note);
-
-});
-
 
 }
 
 
 
 
+let draggedPage = null;
 
-
-
-
-
-window.dragPageStart = function(e, id){
-  draggedPageId = id;
-  e.dataTransfer.setData("text/plain", id);
+window.dragStart = function(id){
+draggedPage = id;
 };
-
-
-
 
 
 
@@ -503,7 +425,7 @@ const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
 if(!note) return;
 
-const from = note.pages.findIndex(p => p.id === draggedPageId);
+const from = note.pages.findIndex(p => p.id === draggedPage);
 const to = note.pages.findIndex(p => p.id === targetId);
 
 const [moved] = note.pages.splice(from,1);
@@ -993,99 +915,3 @@ window.addEventListener("popstate", async ()=>{
   }
 
 });
-
-
-
-
-
-
-
-
-
-/* =========================
-WORLD CLASS DRAG SYSTEM
-========================= */
-
-function enableDrag(containerId, getItems, onReorder){
-
-  const container = document.getElementById(containerId);
-  if(!container) return;
-
-  let draggedEl = null;
-  let startY = 0;
-
-  container.querySelectorAll(".card").forEach(card => {
-
-    card.style.touchAction = "none";
-    card.style.transition = "transform 0.15s ease";
-
-    const start = (e) => {
-
-      draggedEl = card;
-      startY = (e.touches ? e.touches[0].clientY : e.clientY);
-
-      card.style.transform = "scale(1.03)";
-      card.style.boxShadow = "0 10px 30px rgba(0,0,0,0.4)";
-      card.style.zIndex = "999";
-
-      document.addEventListener("mousemove", move);
-      document.addEventListener("touchmove", move, { passive:false });
-
-      document.addEventListener("mouseup", end);
-      document.addEventListener("touchend", end);
-    };
-
-    const move = (e) => {
-
-      if(!draggedEl) return;
-
-      const y = (e.touches ? e.touches[0].clientY : e.clientY);
-
-      draggedEl.style.transform = `translateY(${y - startY}px) scale(1.03)`;
-
-      const cards = [...container.querySelectorAll(".card")];
-
-      for(const c of cards){
-
-        if(c === draggedEl) continue;
-
-        const rect = c.getBoundingClientRect();
-
-        if(y > rect.top && y < rect.bottom){
-
-          container.insertBefore(draggedEl, y < rect.top + rect.height/2 ? c : c.nextSibling);
-          break;
-        }
-      }
-
-      e.preventDefault();
-    };
-
-    const end = async () => {
-
-      if(!draggedEl) return;
-
-      draggedEl.style.transform = "scale(1)";
-      draggedEl.style.boxShadow = "";
-      draggedEl.style.zIndex = "";
-
-      const ids = [...container.querySelectorAll(".card")]
-        .map(el => el.dataset.id);
-
-      await onReorder(ids);
-
-      draggedEl = null;
-
-      document.removeEventListener("mousemove", move);
-      document.removeEventListener("touchmove", move);
-
-      document.removeEventListener("mouseup", end);
-      document.removeEventListener("touchend", end);
-    };
-
-    card.addEventListener("mousedown", start);
-    card.addEventListener("touchstart", start, { passive:true });
-
-  });
-
-}
