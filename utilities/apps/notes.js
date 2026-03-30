@@ -1,5 +1,8 @@
 let __currentNoteId = null;
 
+let draggedNoteId = null;
+let draggedPageId = null;
+
 
 /* =========================
 APP REGISTRY
@@ -170,7 +173,12 @@ if(notes.length === 0){
 }
 
 container.innerHTML = notes.map(n => `
-<div class="card" style="margin-bottom:12px;padding:12px;">
+<div class="card"
+     draggable="true"
+     ondragstart="dragNoteStart('${n.id}')"
+     ondragover="event.preventDefault()"
+     ondrop="dropNote('${n.id}')"
+     style="margin-bottom:12px;padding:12px;">
 
   <!-- TITLE -->
   <div style="cursor:pointer;word-break:break-word;margin-bottom:8px;"
@@ -191,6 +199,35 @@ container.innerHTML = notes.map(n => `
 `).join("");
 
 }
+
+
+
+
+window.dragNoteStart = function(id){
+  draggedNoteId = id;
+};
+
+window.dropNote = async function(targetId){
+
+  if(!draggedNoteId || draggedNoteId === targetId) return;
+
+  let notes = await getNotes();
+
+  const from = notes.findIndex(n => n.id === draggedNoteId);
+  const to = notes.findIndex(n => n.id === targetId);
+
+  const [moved] = notes.splice(from, 1);
+  notes.splice(to, 0, moved);
+
+  for(const note of notes){
+    await saveNote(note);
+  }
+
+  draggedNoteId = null;
+
+  await renderNotes();
+};
+
 
 /* =========================
 CREATE NOTE (MULTI PAGE)
@@ -384,7 +421,12 @@ if(pages.length === 0){
 }
 
 list.innerHTML = pages.map(p => `
-<div class="card" style="margin-bottom:12px;padding:12px;">
+<div class="card"
+     draggable="true"
+     ondragstart="dragPageStart('${p.id}')"
+     ondragover="event.preventDefault()"
+     ondrop="dropPage('${noteId}','${p.id}')"
+     style="margin-bottom:12px;padding:12px;">
 
   <!-- TITLE -->
   <div style="cursor:pointer;word-break:break-word;margin-bottom:8px;"
@@ -410,12 +452,32 @@ list.innerHTML = pages.map(p => `
 
 
 
-
-let draggedPage = null;
-
-window.dragStart = function(id){
-draggedPage = id;
+window.dragPageStart = function(id){
+  draggedPageId = id;
 };
+
+window.dropPage = async function(noteId, targetId){
+
+  if(!draggedPageId || draggedPageId === targetId) return;
+
+  const notes = await getNotes();
+  const note = notes.find(n => n.id === noteId);
+  if(!note) return;
+
+  const from = note.pages.findIndex(p => p.id === draggedPageId);
+  const to = note.pages.findIndex(p => p.id === targetId);
+
+  const [moved] = note.pages.splice(from, 1);
+  note.pages.splice(to, 0, moved);
+
+  await saveNote(note);
+
+  draggedPageId = null;
+
+  openNote(noteId);
+};
+
+
 
 
 
