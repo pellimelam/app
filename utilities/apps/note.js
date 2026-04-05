@@ -7,7 +7,7 @@ APP REGISTRY
 
 window.__apps = window.__apps || {};
 
-window.__apps["notes"] = async function(){
+window.__apps["note"] = async function(){
   await loadNotesApp();
 };
 
