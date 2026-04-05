@@ -334,12 +334,16 @@ document.getElementById("searchPages").addEventListener("input", ()=>{
 APP.changeFontSize = function(change){
 
 const editor = document.getElementById("textEditor");
+if(!editor) return;
 
-const current = window.getComputedStyle(editor).fontSize;
-
-let size = parseInt(current);
+let size = parseInt(editor.dataset.fontSize || 14);
 
 size += change;
+
+if(size < 10) size = 10;
+if(size > 40) size = 40;
+
+editor.dataset.fontSize = size;
 
 editor.style.fontSize = size + "px";
 
@@ -563,25 +567,37 @@ view.innerHTML = `
 const editorDiv = document.getElementById("editor");
 
 editorDiv.innerHTML = `
-<div id="textEditor" contenteditable="true" style="
+<div id="textEditor" contenteditable="true" spellcheck="true" style="
   width:100%;
   height:100%;
   background:#ffffff;
   color:#000000;
-  border:1px solid #ccc;
+  border:1px solid #ddd;
   outline:none;
   padding:12px;
   font-size:14px;
+  line-height:1.4;
   overflow:auto;
+  white-space:pre-wrap;
 "></div>
 `;
 
 const editor = document.getElementById("textEditor");
-editor.innerHTML = page.content || "";
 
+// load content
+editor.innerText = page.content || "";
+
+/* ✅ SAVE */
 editor.addEventListener("input", async ()=>{
-  page.content = editor.innerHTML;
+  page.content = editor.innerText;
   await saveNote(note);
+});
+
+/* ✅ CLEAN PASTE (NO STYLE, NO COLOR) */
+editor.addEventListener("paste", (e)=>{
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData("text");
+  document.execCommand("insertText", false, text);
 });
 
 };
@@ -617,9 +633,7 @@ openNote(noteId);
 APP.formatText = function(type){
 
 const editor = document.getElementById("textEditor");
-
 editor.focus();
-document.execCommand("styleWithCSS", false, true);
 
 if(type === "bold"){
   document.execCommand("bold");
@@ -627,10 +641,6 @@ if(type === "bold"){
 
 if(type === "italic"){
   document.execCommand("italic");
-}
-
-if(type === "h1"){
-  document.execCommand("formatBlock", false, "h1");
 }
 
 };
@@ -698,11 +708,11 @@ APP.exportNote = async function(id){
       alert("PDF library failed to load");
       return;
     }
-    const jsPDF = window.jspdf?.jsPDF;
-    if(!jsPDF){
-      alert("PDF library not loaded");
+    if(!window.jspdf || !window.jspdf.jsPDF){
+      alert("PDF not loaded. Refresh once.");
       return;
     }
+    const jsPDF = window.jspdf.jsPDF;
     const pdf = new jsPDF();
 
     const lines = pdf.splitTextToSize(content, 180);
@@ -799,11 +809,11 @@ APP.downloadPage = async function(noteId, pageId){
   /* ✅ SINGLE FILE */
   if(path.length === 1){
 
-    const jsPDF = window.jspdf?.jsPDF;
-    if(!jsPDF){
-      alert("PDF library not loaded");
+    if(!window.jspdf || !window.jspdf.jsPDF){
+      alert("PDF not loaded. Refresh once.");
       return;
     }
+    const jsPDF = window.jspdf.jsPDF;
     const pdf = new jsPDF();
 
     const lines = pdf.splitTextToSize(content, 180);
@@ -823,11 +833,11 @@ APP.downloadPage = async function(noteId, pageId){
     folder = folder.folder(path[i]);
   }
 
-  const jsPDF = window.jspdf?.jsPDF;
-  if(!jsPDF){
-    alert("PDF library not loaded");
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    alert("PDF not loaded. Refresh once.");
     return;
   }
+  const jsPDF = window.jspdf.jsPDF;
   const pdf = new jsPDF();
 
   const lines = pdf.splitTextToSize(content, 180);
