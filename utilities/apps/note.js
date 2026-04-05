@@ -94,10 +94,12 @@ LOAD MAIN UI
 
 async function loadNotesApp(){
 
-history.replaceState({
-  app: "note",
-  screen: "home"
-}, "", "#home");
+if(!history.state){
+  history.replaceState({
+    app: "notes",
+    screen: "home"
+  }, "", "#home");
+}
 
 const view = document.getElementById("appView");
 if(!view) return;
