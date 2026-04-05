@@ -333,9 +333,9 @@ document.getElementById("searchPages").addEventListener("input", ()=>{
 
 APP.changeFontSize = function(change){
 
-const editor = document.getElementById("editor");
+const editor = document.getElementById("textEditor");
 
-const current = APP.getComputedStyle(editor).fontSize;
+const current = window.getComputedStyle(editor).fontSize;
 
 let size = parseInt(current);
 
@@ -563,7 +563,7 @@ view.innerHTML = `
 const editorDiv = document.getElementById("editor");
 
 editorDiv.innerHTML = `
-<textarea id="textEditor" style="
+<div id="textEditor" contenteditable="true" style="
   width:100%;
   height:100%;
   background:#ffffff;
@@ -572,15 +572,15 @@ editorDiv.innerHTML = `
   outline:none;
   padding:12px;
   font-size:14px;
-  resize:none;
-"></textarea>
+  overflow:auto;
+"></div>
 `;
 
-const textarea = document.getElementById("textEditor");
-textarea.value = page.content || "";
+const editor = document.getElementById("textEditor");
+editor.innerHTML = page.content || "";
 
-textarea.addEventListener("input", async ()=>{
-  page.content = textarea.value;
+editor.addEventListener("input", async ()=>{
+  page.content = editor.innerHTML;
   await saveNote(note);
 });
 
@@ -616,21 +616,22 @@ openNote(noteId);
 
 APP.formatText = function(type){
 
-const editor = document.getElementById("editor");
+const editor = document.getElementById("textEditor");
+
+editor.focus();
+document.execCommand("styleWithCSS", false, true);
 
 if(type === "bold"){
-document.execCommand("bold");
+  document.execCommand("bold");
 }
 
 if(type === "italic"){
-document.execCommand("italic");
+  document.execCommand("italic");
 }
 
 if(type === "h1"){
-document.execCommand("formatBlock", false, "h1");
+  document.execCommand("formatBlock", false, "h1");
 }
-
-editor.focus();
 
 };
 
@@ -692,8 +693,9 @@ APP.exportNote = async function(id){
       folder = folder.folder(path[j]);
     }
 
-    if(!window.jspdf){
-      alert("PDF library not loaded");
+    if(!window.jspdf || !window.jspdf.jsPDF){
+      console.error("jsPDF not loaded", window.jspdf);
+      alert("PDF library failed to load");
       return;
     }
     const jsPDF = window.jspdf?.jsPDF;
