@@ -1,3 +1,5 @@
+window.__apps_scope = {};
+
 /* =========================
 APP ROUTER (WORLD-CLASS)
 ========================= */
@@ -156,7 +158,25 @@ window.openApp = async function(appId, options = {}){
     }
 
     /* RUN APP */
+    window.__apps_scope[appId] = window.__apps_scope[appId] || {};
+
+    const prevWindow = window;
+
+    const scopedWindow = new Proxy(window, {
+      get(target, key){
+        return window.__apps_scope[appId][key] || target[key];
+      },
+      set(target, key, value){
+        window.__apps_scope[appId][key] = value;
+        return true;
+      }
+    });
+
+    globalThis.window = scopedWindow;
+
     await window.__apps[appId]();
+
+    globalThis.window = prevWindow;
 
   }catch(e){
 
