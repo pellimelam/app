@@ -1,4 +1,5 @@
-let __note_currentId = null;
+let __currentNoteId = null;
+
 
 /* =========================
 APP REGISTRY
@@ -7,312 +8,833 @@ APP REGISTRY
 window.__apps = window.__apps || {};
 
 window.__apps["note"] = async function(){
-  await note_loadApp();
+  await loadNotesApp();
 };
 
+
+
+
 /* =========================
-INDEXED DB (ISOLATED)
+INDEXED DB (PRO STORAGE)
 ========================= */
 
-const NOTE_DB = "vidhwaan_note_pdf_db";
-const NOTE_STORE = "note_pages_store";
+const DB_NAME = "vidhwaan_note_pdf_db";
+const STORE = "note_pages_store";
 
-let note_db;
+let dbPromise;
 
-function note_initDB(){
-  if(note_db) return note_db;
+function initDB(){
+  if(dbPromise) return dbPromise;
 
-  note_db = new Promise((res, rej)=>{
-    const req = indexedDB.open(NOTE_DB, 1);
+  dbPromise = new Promise((resolve, reject)=>{
+    const req = indexedDB.open(DB_NAME, 1);
 
-    req.onupgradeneeded = e=>{
+    req.onupgradeneeded = (e)=>{
       const db = e.target.result;
-      if(!db.objectStoreNames.contains(NOTE_STORE)){
-        db.createObjectStore(NOTE_STORE, { keyPath:"id" });
+      if(!db.objectStoreNames.contains(STORE)){
+        db.createObjectStore(STORE, { keyPath: "id" });
       }
     };
 
-    req.onsuccess = e=> res(e.target.result);
-    req.onerror = rej;
+    req.onsuccess = (e)=> resolve(e.target.result);
+    req.onerror = reject;
   });
 
-  return note_db;
+  return dbPromise;
 }
 
-async function note_getAll(){
-  const db = await note_initDB();
+async function getNotes(){
+  try{
+    const db = await initDB();
 
-  return new Promise(r=>{
-    const tx = db.transaction(NOTE_STORE,"readonly");
-    const req = tx.objectStore(NOTE_STORE).getAll();
-    req.onsuccess = ()=> r(req.result || []);
-    req.onerror = ()=> r([]);
-  });
+    return new Promise(resolve=>{
+      const tx = db.transaction(STORE, "readonly");
+      const store = tx.objectStore(STORE);
+      const req = store.getAll();
+      req.onsuccess = ()=> resolve(req.result || []);
+      req.onerror = ()=> resolve([]);
+    });
+
+  }catch(e){
+    console.error("DB ERROR:", e);
+    return [];
+  }
 }
 
-async function note_save(n){
-  const db = await note_initDB();
-  db.transaction(NOTE_STORE,"readwrite").objectStore(NOTE_STORE).put(n);
+async function saveNote(note){
+  try{
+    const db = await initDB();
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).put(note);
+  }catch(e){
+    console.error("SAVE ERROR:", e);
+  }
 }
 
-async function note_delete(id){
-  const db = await note_initDB();
-  db.transaction(NOTE_STORE,"readwrite").objectStore(NOTE_STORE).delete(id);
+
+async function deleteNoteDB(id){
+  try{
+    const db = await initDB();
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).delete(id);
+  }catch(e){
+    console.error("DELETE ERROR:", e);
+  }
 }
+
+
 
 /* =========================
-MAIN UI
+LOAD MAIN UI
 ========================= */
 
-async function note_loadApp(){
+async function loadNotesApp(){
 
 const view = document.getElementById("appView");
 if(!view) return;
 
 view.innerHTML = `
+
 <div class="container">
 
-<div style="display:flex;justify-content:space-between;margin-bottom:15px;">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
+
+  <!-- LEFT: BACK -->
   <button class="btn btn-outline" onclick="backToList()">←</button>
-  <h2 style="margin:0;flex:1;text-align:center;">VID Note</h2>
-  <button class="btn btn-primary" onclick="note_create()">+ New</button>
+
+  <!-- CENTER: TITLE -->
+  <h2 style="margin:0;text-align:center;flex:1;">VID Note</h2>
+
+  <!-- RIGHT: NEW -->
+  <button class="btn btn-primary" onclick="note_createNote()">+ New</button>
+
 </div>
 
-<input id="noteSearch" placeholder="Search..." style="width:100%;padding:10px;margin-bottom:15px;border-radius:10px;border:none;background:#020617;color:white;">
 
-<div id="noteList"></div>
+<input id="searchNotes" placeholder="Search notes..." style="
+width:100%;
+padding:10px;
+margin-bottom:15px;
+border-radius:10px;
+border:none;
+background:#020617;
+color:white;
+">
+
+<div id="notesList">Loading...</div>
 
 </div>
+
 `;
 
-document.getElementById("noteSearch").oninput = note_renderList;
+document.getElementById("searchNotes").addEventListener("input", renderNotes);
 
-await note_renderList();
+await renderNotes();
+
 }
 
 /* =========================
-LIST
+RENDER LIST
 ========================= */
 
-async function note_renderList(){
+async function renderNotes(){
 
-const q = document.getElementById("noteSearch")?.value?.toLowerCase() || "";
-let list = await note_getAll();
+const query = document.getElementById("searchNotes")?.value?.toLowerCase() || "";
 
-list = list.filter(n => (n.title||"").toLowerCase().includes(q));
+let notes = await getNotes();
 
-list.sort((a,b)=>{
-  if(b.pinned!==a.pinned) return b.pinned - a.pinned;
-  return b.id - a.id;
+/* FILTER */
+notes = notes.filter(n =>
+  String(n.title || "").toLowerCase().includes(query)
+);
+
+/* SORT */
+notes.sort((a,b)=>{
+  if(b.pinned !== a.pinned){
+    return (b.pinned === true) - (a.pinned === true);
+  }
+  return Number(b.id) - Number(a.id);
 });
 
-const el = document.getElementById("noteList");
+const container = document.getElementById("notesList");
 
-if(!list.length){
-  el.innerHTML = `<div style="text-align:center;opacity:.6">No notes</div>`;
+if(notes.length === 0){
+  container.innerHTML = `
+  <div style="text-align:center;opacity:0.6;padding:20px;">
+  No notes yet<br>
+  <small>Create your first note</small>
+  </div>
+  `;
   return;
 }
 
-el.innerHTML = list.map(n=>`
+container.innerHTML = notes.map(n => `
 <div class="card" style="margin-bottom:12px;padding:12px;">
 
-<div onclick="note_open('${n.id}')" style="cursor:pointer;margin-bottom:8px;">
-${n.pinned?"📌":""} <strong>${n.title||"Untitled"}</strong>
-</div>
+  <!-- TITLE -->
+  <div style="cursor:pointer;word-break:break-word;margin-bottom:8px;"
+       onclick="event.stopPropagation(); openNote('${n.id}')">
+    ${n.pinned ? "📌 " : ""}
+    <strong>${n.title || "Untitled"}</strong>
+  </div>
 
-<div style="display:flex;gap:8px;">
-<button onclick="note_pin('${n.id}')">📌</button>
-<button onclick="note_rename('${n.id}')">✏️</button>
-<button onclick="note_delete('${n.id}')">🗑️</button>
-<button onclick="note_export('${n.id}')">Export</button>
-</div>
+  <!-- ACTIONS -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    <button onclick="event.stopPropagation(); togglePin('${n.id}')">📌</button>
+    <button onclick="event.stopPropagation(); renameNote('${n.id}')">✏️</button>
+    <button onclick="event.stopPropagation(); deleteNote('${n.id}')">🗑️</button>
+    <button onclick="event.stopPropagation(); exportNote('${n.id}')">Export</button>
+  </div>
 
 </div>
 `).join("");
+
 }
 
 /* =========================
-CRUD
+CREATE NOTE (MULTI PAGE)
 ========================= */
 
-async function note_create(){
-const n = {
+window.note_createNote = async function(){
+
+const newNote = {
   id: Date.now().toString(),
-  title:"New Project",
-  pinned:false,
-  pages:[{id:Date.now().toString(),name:"Page",content:""}]
+  title: "New Project",
+  pinned: false,
+  folder: "default",
+  pages: [{ id: Date.now().toString(), name: "Page", content: "", pinned: false }]
 };
-await note_save(n);
-note_renderList();
-}
 
-async function note_pin(id){
-const list = await note_getAll();
-const n = list.find(x=>x.id===id);
-n.pinned=!n.pinned;
-await note_save(n);
-note_renderList();
-}
+await saveNote(newNote);
 
-async function note_rename(id){
-const list = await note_getAll();
-const n = list.find(x=>x.id===id);
-const name = prompt("Rename", n.title);
-if(!name) return;
-n.title = name;
-await note_save(n);
-note_renderList();
-}
+/* refresh list */
+await renderNotes();
 
-async function note_delete(id){
-await note_deleteDB?.(id) || await note_delete(id);
-note_renderList();
-}
-
-/* =========================
-OPEN NOTE
-========================= */
-
-async function note_open(id){
-
-__note_currentId = id;
-
-history.pushState({}, "", "#note-pages");
-
-const list = await note_getAll();
-const n = list.find(x=>x.id===id);
-
-const view = document.getElementById("appView");
-
-view.innerHTML = `
-<div class="container">
-
-<div style="display:flex;justify-content:space-between;margin-bottom:15px;">
-<button onclick="history.back()">←</button>
-<h2 style="flex:1;text-align:center;">${n.title}</h2>
-<button onclick="note_addPage('${id}')">+ Page</button>
-</div>
-
-<div id="pages"></div>
-
-</div>
-`;
-
-note_renderPages(n);
-}
-
-/* =========================
-PAGES
-========================= */
-
-function note_renderPages(n){
-
-const el = document.getElementById("pages");
-
-el.innerHTML = n.pages.map(p=>`
-<div class="card" style="margin-bottom:10px;padding:10px;">
-
-<div onclick="note_openPage('${n.id}','${p.id}')">
-${p.name}
-</div>
-
-<button onclick="note_download('${n.id}','${p.id}')">Export</button>
-
-</div>
-`).join("");
-}
-
-async function note_addPage(id){
-const list = await note_getAll();
-const n = list.find(x=>x.id===id);
-n.pages.unshift({id:Date.now().toString(),name:"Page",content:""});
-await note_save(n);
-note_open(id);
-}
-
-/* =========================
-EDITOR
-========================= */
-
-async function note_openPage(noteId,pageId){
-
-history.pushState({}, "", "#note-editor");
-
-const list = await note_getAll();
-const n = list.find(x=>x.id===noteId);
-const p = n.pages.find(x=>x.id===pageId);
-
-const view = document.getElementById("appView");
-
-view.innerHTML = `
-<div class="container">
-
-<button onclick="history.back()">←</button>
-
-<textarea id="editor" style="width:100%;height:70vh;background:#020617;color:white;">
-${p.content||""}
-</textarea>
-
-</div>
-`;
-
-document.getElementById("editor").oninput = async e=>{
-p.content = e.target.value;
-await note_save(n);
 };
-}
 
 /* =========================
-EXPORT
+DELETE / RENAME / PIN
 ========================= */
+window.note_deleteNote = async function(id){
+  await deleteNoteDB(id);
+  await renderNotes();
+};
 
-function note_pdf(text,name){
-const { jsPDF } = window.jspdf;
-const pdf = new jsPDF();
-pdf.text(pdf.splitTextToSize(text,180),10,10);
-pdf.save(name);
-}
 
-async function note_download(noteId,pageId){
-const list = await note_getAll();
-const n = list.find(x=>x.id===noteId);
-const p = n.pages.find(x=>x.id===pageId);
-note_pdf(p.content || "", (p.name||"page")+".pdf");
-}
-
-async function note_export(id){
-
-const list = await note_getAll();
-const n = list.find(x=>x.id===id);
-
-const zip = new JSZip();
-
-for(const p of n.pages){
-const { jsPDF } = window.jspdf;
-const pdf = new jsPDF();
-pdf.text(pdf.splitTextToSize(p.content||"",180),10,10);
-zip.file((p.name||"page")+".pdf", pdf.output("blob"));
-}
-
-const blob = await zip.generateAsync({type:"blob"});
-const a = document.createElement("a");
-a.href = URL.createObjectURL(blob);
-a.download = (n.title||"note")+".zip";
-a.click();
-}
-
-/* =========================
-NAVIGATION
-========================= */
-
-window.addEventListener("popstate", ()=>{
-if(!location.hash.startsWith("#note")){
+window.note_renameNote = async function(id){
+const notes = await getNotes();
+const note = notes.find(n => n.id === id);
+if(!note){
+  backToList();
   return;
 }
-if(!location.hash){
-  note_loadApp();
+
+const name = prompt("Rename note", note.title);
+if(!name || !name.trim()) return;
+
+note.title = name.substring(0, 40);
+
+await saveNote(note);
+await renderNotes();
+};
+
+window.note_togglePin = async function(id){
+const notes = await getNotes();
+const note = notes.find(n => n.id === id);
+if(!note){
+  backToList();
+  return;
 }
-if(location.hash==="#note-pages" && __note_currentId){
-  note_open(__note_currentId);
+
+note.pinned = !note.pinned;
+
+await saveNote(note);
+await renderNotes();
+};
+
+/* =========================
+OPEN NOTE (PAGES UI)
+========================= */
+
+window.note_openNote = async function(id){
+
+__currentNoteId = id;
+
+if(location.hash !== "#note-pages"){
+  history.pushState({ screen: "pages" }, "", "#note-pages");
 }
+
+
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === id);
+if(!note){
+  backToList();
+  return;
+}
+
+const view = document.getElementById("appView");
+
+view.innerHTML = `
+
+<div class="container">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
+
+    <button class="btn btn-outline" onclick="history.back()">←</button>
+
+    <h2 style="margin:0;text-align:center;flex:1;">${note.title || "Note"}</h2>
+
+    <button class="btn btn-primary" onclick="addPage('${note.id}')">+ Page</button>
+
+  </div>
+
+  <input id="searchPages" placeholder="Search pages..." style="
+    width:100%;
+    padding:10px;
+    margin-bottom:15px;
+    border-radius:10px;
+    border:none;
+    background:#020617;
+    color:white;
+  ">
+
+  <div id="pagesList"></div>
+
+</div>
+`;
+
+
+
+renderPages(note, id);
+
+document.getElementById("searchPages").addEventListener("input", ()=>{
+  renderPages(note, id);
+});
+
+};
+
+
+
+
+
+window.note_changeFontSize = function(change){
+
+const editor = document.getElementById("editor");
+
+const current = window.note_getComputedStyle(editor).fontSize;
+
+let size = parseInt(current);
+
+size += change;
+
+editor.style.fontSize = size + "px";
+
+editor.focus();
+
+};
+
+
+
+
+window.note_updateNoteTitle = async function(noteId, value){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note) return;
+
+note.title = value;
+
+await saveNote(note);
+
+};
+
+
+/* =========================
+PAGES SYSTEM
+========================= */
+
+function renderPages(note, noteId){
+
+const list = document.getElementById("pagesList");
+
+const query = document.getElementById("searchPages")?.value?.toLowerCase() || "";
+
+/* FILTER */
+let pages = note.pages.filter(p =>
+  String(p.name || "").toLowerCase().includes(query)
+);
+
+/* SORT (same as notes) */
+pages.sort((a,b)=>{
+  if(b.pinned !== a.pinned){
+    return (b.pinned === true) - (a.pinned === true);
+  }
+  return Number(b.id) - Number(a.id);
+});
+
+if(pages.length === 0){
+  list.innerHTML = `
+  <div style="text-align:center;opacity:0.6;padding:20px;">
+  No pages<br>
+  <small>Create your first page</small>
+  </div>`;
+  return;
+}
+
+list.innerHTML = pages.map(p => `
+<div class="card" style="margin-bottom:12px;padding:12px;">
+
+  <!-- TITLE -->
+  <div style="cursor:pointer;word-break:break-word;margin-bottom:8px;"
+       onclick="event.stopPropagation(); openPage('${noteId}','${p.id}')">
+    ${p.pinned ? "📌 " : ""}
+    <strong>${p.name || "Untitled"}</strong>
+  </div>
+
+  <!-- ACTIONS -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    <button onclick="event.stopPropagation(); togglePagePin('${noteId}','${p.id}')">📌</button>
+    <button onclick="event.stopPropagation(); renamePage('${noteId}','${p.id}')">✏️</button>
+    <button onclick="event.stopPropagation(); deletePage('${noteId}','${p.id}')">🗑️</button>
+    <button onclick="event.stopPropagation(); downloadPage('${noteId}','${p.id}')">Export</button>
+  </div>
+
+</div>
+`).join("");
+
+
+
+}
+
+
+
+
+let draggedPage = null;
+
+window.note_dragStart = function(id){
+draggedPage = id;
+};
+
+
+
+window.note_dropPage = async function(noteId, targetId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note) return;
+
+const from = note.pages.findIndex(p => p.id === draggedPage);
+const to = note.pages.findIndex(p => p.id === targetId);
+
+const [moved] = note.pages.splice(from,1);
+note.pages.splice(to,0,moved);
+
+await saveNote(note);
+
+openNote(noteId);
+
+};
+
+
+
+
+
+
+window.note_renamePage = async function(noteId, pageId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note){
+  backToList();
+  return;
+}
+
+const page = note.pages.find(p => p.id === pageId);
+if(!page) return;
+
+const name = prompt("Page name", page.name || "");
+
+if(!name) return;
+
+page.name = name.substring(0, 200);
+
+await saveNote(note);
+
+renderPages(note, noteId);
+
+};
+
+
+
+
+
+window.note_togglePagePin = async function(noteId, pageId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note){
+  backToList();
+  return;
+}
+
+const page = note.pages.find(p => p.id === pageId);
+if(!page) return;
+
+page.pinned = !page.pinned;
+
+await saveNote(note);
+
+renderPages(note, noteId);
+};
+
+
+
+window.note_deletePage = async function(noteId, pageId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note){
+  backToList();
+  return;
+}
+
+note.pages = note.pages.filter(p => p.id !== pageId);
+
+await saveNote(note);
+
+renderPages(note, noteId);
+};
+
+
+window.note_openPage = async function(noteId, pageId){
+
+if(location.hash !== "#note-editor"){
+  history.pushState({ screen: "editor" }, "", "#note-editor");
+}
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note) return;
+
+const page = note.pages.find(p => p.id === pageId);
+if(!page) return;
+
+const view = document.getElementById("appView");
+
+view.innerHTML = `
+
+<div class="container">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <button class="btn btn-outline" onclick="history.back()">← Back</button>
+
+    <strong>${page.name || "Untitled"}</strong>
+  </div>
+
+  <div class="editor-toolbar">
+    <button onclick="formatText('bold')">B</button>
+    <button onclick="formatText('italic')">I</button>
+    <button onclick="changeFontSize(2)">A+</button>
+    <button onclick="changeFontSize(-2)">A-</button>
+  </div>
+
+  <div id="editor" style="height:70vh;border-radius:12px;overflow:hidden;"></div>
+
+</div>
+`;
+
+const editorDiv = document.getElementById("editor");
+
+editorDiv.innerHTML = `
+<textarea id="textEditor" style="
+  width:100%;
+  height:100%;
+  background:#020617;
+  color:white;
+  border:none;
+  outline:none;
+  padding:12px;
+  font-size:14px;
+  resize:none;
+"></textarea>
+`;
+
+const textarea = document.getElementById("textEditor");
+textarea.value = page.content || "";
+
+textarea.addEventListener("input", async ()=>{
+  page.content = textarea.value;
+  await saveNote(note);
+});
+
+};
+
+
+
+
+window.note_addPage = async function(noteId){
+
+const notes = await getNotes();
+const note = notes.find(n => n.id === noteId);
+if(!note){
+  backToList();
+  return;
+}
+
+note.pages.unshift({
+  id: Date.now().toString(),
+  name: "Page",
+  content: "",
+  pinned: false
+});
+
+await saveNote(note);
+
+openNote(noteId);
+
+};
+
+
+
+
+window.note_formatText = function(type){
+
+const editor = document.getElementById("editor");
+
+if(type === "bold"){
+document.execCommand("bold");
+}
+
+if(type === "italic"){
+document.execCommand("italic");
+}
+
+if(type === "h1"){
+document.execCommand("formatBlock", false, "h1");
+}
+
+editor.focus();
+
+};
+
+
+
+window.note_exportNote = async function(id){
+
+  const notes = await getNotes();
+  const note = notes.find(n => n.id === id);
+  if(!note){
+    backToList();
+    return;
+  }
+
+  const zip = new JSZip();
+
+  for(let i = 0; i < note.pages.length; i++){
+
+    const page = note.pages[i];
+
+    // convert HTML → proper text (same as downloadPage)
+    const temp = document.createElement("div");
+    temp.innerHTML = page.content || "";
+
+    let text = "";
+
+    function parseNode(node){
+      if(node.nodeType === Node.TEXT_NODE){
+        text += node.nodeValue;
+      }
+
+      if(node.nodeType === Node.ELEMENT_NODE){
+
+        if(node.tagName === "BR"){
+          text += "\n";
+        }
+
+        node.childNodes.forEach(parseNode);
+
+        if(["DIV","P"].includes(node.tagName)){
+          text += "\n";
+        }
+      }
+    }
+
+    temp.childNodes.forEach(parseNode);
+
+    const content = text
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+    const meta = getFileMeta(page.name || `Page_${i+1}`);
+    const path = meta.fileName.split("/").filter(Boolean);
+
+    // create nested folders
+    let folder = zip;
+
+    for(let j = 0; j < path.length - 1; j++){
+      folder = folder.folder(path[j]);
+    }
+
+    const { jsPDF } = window.note_jspdf;
+    const pdf = new jsPDF();
+
+    const lines = pdf.splitTextToSize(content, 180);
+    pdf.text(lines, 10, 10);
+
+    const pdfBlob = pdf.output("blob");
+
+    folder.file(path[path.length - 1], pdfBlob);
+
+ 
+  }
+
+  const blob = await zip.generateAsync({ type: "blob" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (note.title || "note") + ".zip";
+  a.click();
+
+};
+
+
+
+
+function getFileMeta(name){
+
+  let clean = (name || "file").trim();
+
+  // KEEP folder structure logic intact
+  if(!clean.endsWith(".pdf")){
+    clean = clean + ".pdf";
+  }
+
+  return {
+    fileName: clean,
+    mime: "application/pdf"
+  };
+}
+
+
+
+
+
+
+
+
+
+window.note_downloadPage = async function(noteId, pageId){
+
+  const notes = await getNotes();
+  const note = notes.find(n => n.id === noteId);
+  if(!note){
+    backToList();
+    return;
+  }
+
+  const page = note.pages.find(p => p.id === pageId);
+  if(!page) return;
+
+  // convert HTML → text
+  const temp = document.createElement("div");
+  temp.innerHTML = page.content || "";
+
+  let text = "";
+
+  function parseNode(node){
+    if(node.nodeType === Node.TEXT_NODE){
+      text += node.nodeValue;
+    }
+
+    if(node.nodeType === Node.ELEMENT_NODE){
+
+      if(node.tagName === "BR"){
+        text += "\n";
+      }
+
+      node.childNodes.forEach(parseNode);
+
+      if(["DIV","P"].includes(node.tagName)){
+        text += "\n";
+      }
+    }
+  }
+
+  temp.childNodes.forEach(parseNode);
+
+  const content = text
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  const meta = getFileMeta(page.name);
+  const path = meta.fileName.split("/").filter(Boolean);
+
+  /* ✅ SINGLE FILE */
+  if(path.length === 1){
+
+    const { jsPDF } = window.note_jspdf;
+    const pdf = new jsPDF();
+
+    const lines = pdf.splitTextToSize(content, 180);
+    pdf.text(lines, 10, 10);
+
+    pdf.save(meta.fileName);
+
+    return;
+  }
+
+  /* ✅ FOLDER → ZIP */
+  const zip = new JSZip();
+
+  let folder = zip;
+
+  for(let i = 0; i < path.length - 1; i++){
+    folder = folder.folder(path[i]);
+  }
+
+  const { jsPDF } = window.note_jspdf;
+  const pdf = new jsPDF();
+
+  const lines = pdf.splitTextToSize(content, 180);
+  pdf.text(lines, 10, 10);
+
+  const pdfBlob = pdf.output("blob");
+
+  folder.file(path[path.length - 1], pdfBlob);
+
+  const blob = await zip.generateAsync({ type: "blob" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (path[0] || "note") + ".zip";
+  a.click();
+
+};
+
+
+
+
+
+window.note_addEventListener("popstate", async ()=>{
+
+  const hash = window.note_location.hash;
+
+  // BACK TO NOTES
+  if(!hash){
+    loadNotesApp();
+    return;
+  }
+
+  // BACK TO PAGES (FIXED)
+  if(hash === "#note-pages"){
+    const notes = await getNotes();
+    if(__currentNoteId){
+      openNote(__currentNoteId);
+    }else{
+      loadNotesApp();
+    }
+    return;
+  }
+
 });
