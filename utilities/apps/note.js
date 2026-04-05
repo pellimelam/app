@@ -14,12 +14,13 @@ window.__apps["note"] = async function(){
 
 
 
+
 /* =========================
 INDEXED DB (PRO STORAGE)
 ========================= */
 
 const DB_NAME = "vidhwaan_note_pdf_db";
-const STORE = "note_pages_store";
+const STORE = "note";
 
 let dbPromise;
 
@@ -103,10 +104,10 @@ view.innerHTML = `
   <button class="btn btn-outline" onclick="backToList()">←</button>
 
   <!-- CENTER: TITLE -->
-  <h2 style="margin:0;text-align:center;flex:1;">VID Note</h2>
+  <h2 style="margin:0;text-align:center;flex:1;">VID Code</h2>
 
   <!-- RIGHT: NEW -->
-  <button class="btn btn-primary" onclick="note_createNote()">+ New</button>
+  <button class="btn btn-primary" onclick="createNote()">+ New</button>
 
 </div>
 
@@ -195,7 +196,7 @@ container.innerHTML = notes.map(n => `
 CREATE NOTE (MULTI PAGE)
 ========================= */
 
-window.note_createNote = async function(){
+window.createNote = async function(){
 
 const newNote = {
   id: Date.now().toString(),
@@ -215,13 +216,13 @@ await renderNotes();
 /* =========================
 DELETE / RENAME / PIN
 ========================= */
-window.note_deleteNote = async function(id){
+window.deleteNote = async function(id){
   await deleteNoteDB(id);
   await renderNotes();
 };
 
 
-window.note_renameNote = async function(id){
+window.renameNote = async function(id){
 const notes = await getNotes();
 const note = notes.find(n => n.id === id);
 if(!note){
@@ -238,7 +239,7 @@ await saveNote(note);
 await renderNotes();
 };
 
-window.note_togglePin = async function(id){
+window.togglePin = async function(id){
 const notes = await getNotes();
 const note = notes.find(n => n.id === id);
 if(!note){
@@ -256,12 +257,12 @@ await renderNotes();
 OPEN NOTE (PAGES UI)
 ========================= */
 
-window.note_openNote = async function(id){
+window.openNote = async function(id){
 
 __currentNoteId = id;
 
-if(location.hash !== "#note-pages"){
-  history.pushState({ screen: "pages" }, "", "#note-pages");
+if(location.hash !== "#pages"){
+  history.pushState({ screen: "pages" }, "", "#pages");
 }
 
 
@@ -318,11 +319,11 @@ document.getElementById("searchPages").addEventListener("input", ()=>{
 
 
 
-window.note_changeFontSize = function(change){
+window.changeFontSize = function(change){
 
 const editor = document.getElementById("editor");
 
-const current = window.note_getComputedStyle(editor).fontSize;
+const current = window.getComputedStyle(editor).fontSize;
 
 let size = parseInt(current);
 
@@ -337,7 +338,7 @@ editor.focus();
 
 
 
-window.note_updateNoteTitle = async function(noteId, value){
+window.updateNoteTitle = async function(noteId, value){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -412,13 +413,13 @@ list.innerHTML = pages.map(p => `
 
 let draggedPage = null;
 
-window.note_dragStart = function(id){
+window.dragStart = function(id){
 draggedPage = id;
 };
 
 
 
-window.note_dropPage = async function(noteId, targetId){
+window.dropPage = async function(noteId, targetId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -441,7 +442,7 @@ openNote(noteId);
 
 
 
-window.note_renamePage = async function(noteId, pageId){
+window.renamePage = async function(noteId, pageId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -469,7 +470,7 @@ renderPages(note, noteId);
 
 
 
-window.note_togglePagePin = async function(noteId, pageId){
+window.togglePagePin = async function(noteId, pageId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -490,7 +491,7 @@ renderPages(note, noteId);
 
 
 
-window.note_deletePage = async function(noteId, pageId){
+window.deletePage = async function(noteId, pageId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -507,10 +508,10 @@ renderPages(note, noteId);
 };
 
 
-window.note_openPage = async function(noteId, pageId){
+window.openPage = async function(noteId, pageId){
 
-if(location.hash !== "#note-editor"){
-  history.pushState({ screen: "editor" }, "", "#note-editor");
+if(location.hash !== "#editor"){
+  history.pushState({ screen: "editor" }, "", "#editor");
 }
 
 const notes = await getNotes();
@@ -573,7 +574,7 @@ textarea.addEventListener("input", async ()=>{
 
 
 
-window.note_addPage = async function(noteId){
+window.addPage = async function(noteId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -598,7 +599,7 @@ openNote(noteId);
 
 
 
-window.note_formatText = function(type){
+window.formatText = function(type){
 
 const editor = document.getElementById("editor");
 
@@ -620,7 +621,7 @@ editor.focus();
 
 
 
-window.note_exportNote = async function(id){
+window.exportNote = async function(id){
 
   const notes = await getNotes();
   const note = notes.find(n => n.id === id);
@@ -676,7 +677,7 @@ window.note_exportNote = async function(id){
       folder = folder.folder(path[j]);
     }
 
-    const { jsPDF } = window.note_jspdf;
+    const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
     const lines = pdf.splitTextToSize(content, 180);
@@ -724,7 +725,7 @@ function getFileMeta(name){
 
 
 
-window.note_downloadPage = async function(noteId, pageId){
+window.downloadPage = async function(noteId, pageId){
 
   const notes = await getNotes();
   const note = notes.find(n => n.id === noteId);
@@ -773,7 +774,7 @@ window.note_downloadPage = async function(noteId, pageId){
   /* ✅ SINGLE FILE */
   if(path.length === 1){
 
-    const { jsPDF } = window.note_jspdf;
+    const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
     const lines = pdf.splitTextToSize(content, 180);
@@ -793,7 +794,7 @@ window.note_downloadPage = async function(noteId, pageId){
     folder = folder.folder(path[i]);
   }
 
-  const { jsPDF } = window.note_jspdf;
+  const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
 
   const lines = pdf.splitTextToSize(content, 180);
@@ -816,9 +817,9 @@ window.note_downloadPage = async function(noteId, pageId){
 
 
 
-window.note_addEventListener("popstate", async ()=>{
+window.addEventListener("popstate", async ()=>{
 
-  const hash = window.note_location.hash;
+  const hash = window.location.hash;
 
   // BACK TO NOTES
   if(!hash){
@@ -827,7 +828,7 @@ window.note_addEventListener("popstate", async ()=>{
   }
 
   // BACK TO PAGES (FIXED)
-  if(hash === "#note-pages"){
+  if(hash === "#pages"){
     const notes = await getNotes();
     if(__currentNoteId){
       openNote(__currentNoteId);
