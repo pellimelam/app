@@ -1,3 +1,5 @@
+const APP = {};
+
 let __currentNoteId = null;
 
 
@@ -5,9 +7,10 @@ let __currentNoteId = null;
 APP REGISTRY
 ========================= */
 
-window.__apps = window.__apps || {};
+window.__apps = APP.__apps || {};
 
 window.__apps["notes"] = async function(){
+  Object.assign(window, APP);
   await loadNotesApp();
 };
 
@@ -196,7 +199,7 @@ container.innerHTML = notes.map(n => `
 CREATE NOTE (MULTI PAGE)
 ========================= */
 
-window.createNote = async function(){
+APP.createNote = async function(){
 
 const newNote = {
   id: Date.now().toString(),
@@ -216,13 +219,13 @@ await renderNotes();
 /* =========================
 DELETE / RENAME / PIN
 ========================= */
-window.deleteNote = async function(id){
+APP.deleteNote = async function(id){
   await deleteNoteDB(id);
   await renderNotes();
 };
 
 
-window.renameNote = async function(id){
+APP.renameNote = async function(id){
 const notes = await getNotes();
 const note = notes.find(n => n.id === id);
 if(!note){
@@ -239,7 +242,7 @@ await saveNote(note);
 await renderNotes();
 };
 
-window.togglePin = async function(id){
+APP.togglePin = async function(id){
 const notes = await getNotes();
 const note = notes.find(n => n.id === id);
 if(!note){
@@ -257,7 +260,7 @@ await renderNotes();
 OPEN NOTE (PAGES UI)
 ========================= */
 
-window.openNote = async function(id){
+APP.openNote = async function(id){
 
 __currentNoteId = id;
 
@@ -319,11 +322,11 @@ document.getElementById("searchPages").addEventListener("input", ()=>{
 
 
 
-window.changeFontSize = function(change){
+APP.changeFontSize = function(change){
 
 const editor = document.getElementById("editor");
 
-const current = window.getComputedStyle(editor).fontSize;
+const current = APP.getComputedStyle(editor).fontSize;
 
 let size = parseInt(current);
 
@@ -338,7 +341,7 @@ editor.focus();
 
 
 
-window.updateNoteTitle = async function(noteId, value){
+APP.updateNoteTitle = async function(noteId, value){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -413,13 +416,13 @@ list.innerHTML = pages.map(p => `
 
 let draggedPage = null;
 
-window.dragStart = function(id){
+APP.dragStart = function(id){
 draggedPage = id;
 };
 
 
 
-window.dropPage = async function(noteId, targetId){
+APP.dropPage = async function(noteId, targetId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -442,7 +445,7 @@ openNote(noteId);
 
 
 
-window.renamePage = async function(noteId, pageId){
+APP.renamePage = async function(noteId, pageId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -470,7 +473,7 @@ renderPages(note, noteId);
 
 
 
-window.togglePagePin = async function(noteId, pageId){
+APP.togglePagePin = async function(noteId, pageId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -491,7 +494,7 @@ renderPages(note, noteId);
 
 
 
-window.deletePage = async function(noteId, pageId){
+APP.deletePage = async function(noteId, pageId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -508,7 +511,7 @@ renderPages(note, noteId);
 };
 
 
-window.openPage = async function(noteId, pageId){
+APP.openPage = async function(noteId, pageId){
 
 if(location.hash !== "#editor"){
   history.pushState({ screen: "editor" }, "", "#editor");
@@ -546,8 +549,8 @@ view.innerHTML = `
 `;
 
 
-if(!window.__monaco_loaded){
-  window.__monaco_loaded = true;
+if(!APP.__monaco_loaded){
+  APP.__monaco_loaded = true;
 
   require.config({ paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs" } });
 }
@@ -569,11 +572,11 @@ require(["vs/editor/editor.main"], function(){
 
   const language = langMap[ext] || "plaintext";
 
-  if(window.__editor){
-    window.__editor.dispose();
+  if(APP.__editor){
+    APP.__editor.dispose();
   }
 
-  window.__editor = monaco.editor.create(document.getElementById("editor"), {
+  APP.__editor = monaco.editor.create(document.getElementById("editor"), {
     value: page.content || "",
     language: language,
     theme: "vs-dark",
@@ -581,8 +584,8 @@ require(["vs/editor/editor.main"], function(){
     fontSize: 14
   });
 
-  window.__editor.onDidChangeModelContent(async ()=>{
-    page.content = window.__editor.getValue();
+  APP.__editor.onDidChangeModelContent(async ()=>{
+    page.content = APP.__editor.getValue();
     await saveNote(note);
   });
 
@@ -595,7 +598,7 @@ require(["vs/editor/editor.main"], function(){
 
 
 
-window.addPage = async function(noteId){
+APP.addPage = async function(noteId){
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -620,7 +623,7 @@ openNote(noteId);
 
 
 
-window.formatText = function(type){
+APP.formatText = function(type){
 
 const editor = document.getElementById("editor");
 
@@ -642,7 +645,7 @@ editor.focus();
 
 
 
-window.exportNote = async function(id){
+APP.exportNote = async function(id){
 
   const notes = await getNotes();
   const note = notes.find(n => n.id === id);
@@ -810,7 +813,7 @@ function getFileMeta(name){
 
 
 
-window.downloadPage = async function(noteId, pageId){
+APP.downloadPage = async function(noteId, pageId){
 
   const notes = await getNotes();
   const note = notes.find(n => n.id === noteId);
@@ -893,12 +896,12 @@ window.downloadPage = async function(noteId, pageId){
 
 
 
-window.addEventListener("popstate", async ()=>{
+APP.addEventListener("popstate", async ()=>{
 
   // 🔒 isolate app
   if(!location.pathname.includes("/notes")) return;
 
-  const hash = window.location.hash;
+  const hash = APP.location.hash;
 
   if(!hash){
     loadNotesApp();
