@@ -44,6 +44,7 @@ DYNAMIC APP LOADER
 
 const APP_LOADERS = {
   notes: () => import("./apps/notes.js"),
+  note: () => import("./apps/note.js"),
 
   /* FUTURE
   chat: () => import("./apps/chat.js"),
@@ -60,6 +61,7 @@ const APP_CONFIG = [
     section: "Utilities",
     apps: [
       { id: "notes", name: "VID Code", icon: "./icons1/logo.png" }
+      { id: "note", name: "VID Note", icon: "./icons1/logo.png" }
     ]
   }
 ];
