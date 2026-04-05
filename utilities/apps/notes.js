@@ -333,23 +333,17 @@ document.getElementById("searchPages").addEventListener("input", ()=>{
 
 APP.changeFontSize = function(change){
 
-if(!APP.__editor) return;
+const editor = document.getElementById("editor");
 
-const current = APP.__editor.getOption(
-  monaco.editor.EditorOption.fontSize
-);
+const current = APP.getComputedStyle(editor).fontSize;
 
-let size = current + change;
+let size = parseInt(current);
 
-// limit size
-if(size < 10) size = 10;
-if(size > 40) size = 40;
+size += change;
 
-APP.__editor.updateOptions({
-  fontSize: size
-});
+editor.style.fontSize = size + "px";
 
-APP.__editor.focus();
+editor.focus();
 
 };
 
