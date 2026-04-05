@@ -819,23 +819,22 @@ window.downloadPage = async function(noteId, pageId){
 
 window.addEventListener("popstate", async ()=>{
 
+  // 🔒 isolate app
+  if(!location.pathname.includes("/note")) return;
+
   const hash = window.location.hash;
 
-  // BACK TO NOTES
   if(!hash){
     loadNotesApp();
     return;
   }
 
-  // BACK TO PAGES (FIXED)
   if(hash === "#pages"){
-    const notes = await getNotes();
     if(__currentNoteId){
       openNote(__currentNoteId);
     }else{
       loadNotesApp();
     }
-    return;
   }
 
 });
