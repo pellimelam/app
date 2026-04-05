@@ -96,7 +96,7 @@ async function loadNotesApp(){
 
 if(!history.state){
   history.replaceState({
-    app: "notes",
+    app: "note",
     screen: "home"
   }, "", "#home");
 }
@@ -566,9 +566,9 @@ editorDiv.innerHTML = `
 <textarea id="textEditor" style="
   width:100%;
   height:100%;
-  background:#020617;
-  color:white;
-  border:none;
+  background:#ffffff;
+  color:#000000;
+  border:1px solid #ccc;
   outline:none;
   padding:12px;
   font-size:14px;
@@ -692,6 +692,10 @@ APP.exportNote = async function(id){
       folder = folder.folder(path[j]);
     }
 
+    if(!window.jspdf){
+      alert("PDF library not loaded");
+      return;
+    }
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
