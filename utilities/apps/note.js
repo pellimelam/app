@@ -264,9 +264,11 @@ APP.openNote = async function(id){
 
 __currentNoteId = id;
 
-if(location.hash !== "#pages"){
-  history.pushState({ screen: "pages" }, "", "#pages");
-}
+history.pushState({
+  app: "note",
+  screen: "pages",
+  noteId: id
+}, "", "#pages");
 
 
 
@@ -513,9 +515,12 @@ renderPages(note, noteId);
 
 APP.openPage = async function(noteId, pageId){
 
-if(location.hash !== "#editor"){
-  history.pushState({ screen: "editor" }, "", "#editor");
-}
+history.pushState({
+  app: "note",
+  screen: "editor",
+  noteId: noteId,
+  pageId: pageId
+}, "", "#editor");
 
 const notes = await getNotes();
 const note = notes.find(n => n.id === noteId);
@@ -820,23 +825,27 @@ APP.downloadPage = async function(noteId, pageId){
 
 
 
-window.addEventListener("popstate", async ()=>{
+window.addEventListener("popstate", async (e)=>{
 
   if(!window.location.pathname.includes("/note")) return;
 
-  const hash = window.location.hash;
+  const state = e.state;
 
-  if(!hash){
+  if(!state){
     loadNotesApp();
     return;
   }
 
-  if(hash === "#pages"){
-    if(__currentNoteId){
-      openNote(__currentNoteId);
-    }else{
-      loadNotesApp();
-    }
+  if(state.screen === "pages"){
+    __currentNoteId = state.noteId;
+    openNote(state.noteId);
+    return;
+  }
+
+  if(state.screen === "editor"){
+    __currentNoteId = state.noteId;
+    openPage(state.noteId, state.pageId);
+    return;
   }
 
 });
