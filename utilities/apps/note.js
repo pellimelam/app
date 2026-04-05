@@ -7,7 +7,7 @@ let __currentNoteId = null;
 APP REGISTRY
 ========================= */
 
-window.__apps = APP.__apps || {};
+window.__apps = window.__apps || {};
 
 window.__apps["note"] = async function(){
   Object.assign(window, APP);
@@ -820,12 +820,11 @@ APP.downloadPage = async function(noteId, pageId){
 
 
 
-APP.addEventListener("popstate", async ()=>{
+window.addEventListener("popstate", async ()=>{
 
-  // 🔒 isolate app
-  if(!location.pathname.includes("/note")) return;
+  if(!window.location.pathname.includes("/note")) return;
 
-  const hash = APP.location.hash;
+  const hash = window.location.hash;
 
   if(!hash){
     loadNotesApp();
