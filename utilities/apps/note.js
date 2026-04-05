@@ -15,7 +15,7 @@ INDEXED DB (ISOLATED)
 ========================= */
 
 const NOTE_DB = "vidhwaan_note_pdf_db";
-const NOTE_STORE = "notes";
+const NOTE_STORE = "note_pages_store";
 
 let note_db;
 
