@@ -60,7 +60,7 @@ const APP_CONFIG = [
   {
     section: "Utilities",
     apps: [
-      { id: "notes", name: "VID Code", icon: "./icons1/logo.png" }
+      { id: "notes", name: "VID Code", icon: "./icons1/logo.png" },
       { id: "note", name: "VID Note", icon: "./icons1/logo.png" }
     ]
   }
