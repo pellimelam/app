@@ -19,7 +19,7 @@ window.__apps["note"] = async function(){
 INDEXED DB (PRO STORAGE)
 ========================= */
 
-const DB_NAME = "vidhwaan_note_pdf_db";
+const DB_NAME = "vidhwaan_notes_pdf_db";
 const STORE = "note";
 
 let dbPromise;
