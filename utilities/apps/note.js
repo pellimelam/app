@@ -333,21 +333,29 @@ document.getElementById("searchPages").addEventListener("input", ()=>{
 
 APP.changeFontSize = function(change){
 
-const editor = document.getElementById("textEditor");
-if(!editor) return;
+const selection = window.getSelection();
+if(!selection.rangeCount) return;
 
-let size = parseInt(editor.dataset.fontSize || 14);
+const range = selection.getRangeAt(0);
 
-size += change;
+// get current size
+let currentSize = 14;
 
-if(size < 10) size = 10;
-if(size > 40) size = 40;
+if(range.startContainer.parentElement){
+  const el = range.startContainer.parentElement;
+  currentSize = parseInt(window.getComputedStyle(el).fontSize) || 14;
+}
 
-editor.dataset.fontSize = size;
+let newSize = currentSize + change;
 
-editor.style.fontSize = size + "px";
+if(newSize < 10) newSize = 10;
+if(newSize > 40) newSize = 40;
 
-editor.focus();
+// wrap selected text
+const span = document.createElement("span");
+span.style.fontSize = newSize + "px";
+
+range.surroundContents(span);
 
 };
 
@@ -703,16 +711,13 @@ APP.exportNote = async function(id){
       folder = folder.folder(path[j]);
     }
 
-    if(!window.jspdf || !window.jspdf.jsPDF){
-      console.error("jsPDF not loaded", window.jspdf);
-      alert("PDF library failed to load");
+    const jsPDF = window.jspdf && window.jspdf.jsPDF;
+
+    if(!jsPDF){
+      alert("PDF failed. Reload page once.");
       return;
     }
-    if(!window.jspdf || !window.jspdf.jsPDF){
-      alert("PDF not loaded. Refresh once.");
-      return;
-    }
-    const jsPDF = window.jspdf.jsPDF;
+
     const pdf = new jsPDF();
 
     const lines = pdf.splitTextToSize(content, 180);
@@ -809,11 +814,12 @@ APP.downloadPage = async function(noteId, pageId){
   /* ✅ SINGLE FILE */
   if(path.length === 1){
 
-    if(!window.jspdf || !window.jspdf.jsPDF){
-      alert("PDF not loaded. Refresh once.");
+    const jsPDF = window.jspdf && window.jspdf.jsPDF;
+
+    if(!jsPDF){
+      alert("PDF failed. Reload page once.");
       return;
     }
-    const jsPDF = window.jspdf.jsPDF;
     const pdf = new jsPDF();
 
     const lines = pdf.splitTextToSize(content, 180);
@@ -833,11 +839,12 @@ APP.downloadPage = async function(noteId, pageId){
     folder = folder.folder(path[i]);
   }
 
-  if(!window.jspdf || !window.jspdf.jsPDF){
-    alert("PDF not loaded. Refresh once.");
+  const jsPDF = window.jspdf && window.jspdf.jsPDF;
+
+  if(!jsPDF){
+    alert("PDF failed. Reload page once.");
     return;
   }
-  const jsPDF = window.jspdf.jsPDF;
   const pdf = new jsPDF();
 
   const lines = pdf.splitTextToSize(content, 180);
