@@ -294,7 +294,7 @@ view.innerHTML = `
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
 
-    <button class="btn btn-outline" onclick="history.back()">←</button>
+    <button class="btn btn-outline" onclick="goBack()">←</button>
 
     <h2 style="margin:0;text-align:center;flex:1;">${note.title || "Note"}</h2>
 
@@ -543,7 +543,7 @@ view.innerHTML = `
 <div class="container">
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-    <button class="btn btn-outline" onclick="history.back()">← Back</button>
+    <button class="btn btn-outline" onclick="goBack()">← Back</button>
 
     <strong>${page.name || "Untitled"}</strong>
   </div>
@@ -696,7 +696,11 @@ APP.exportNote = async function(id){
       alert("PDF library not loaded");
       return;
     }
-    const { jsPDF } = window.jspdf;
+    const jsPDF = window.jspdf?.jsPDF;
+    if(!jsPDF){
+      alert("PDF library not loaded");
+      return;
+    }
     const pdf = new jsPDF();
 
     const lines = pdf.splitTextToSize(content, 180);
@@ -793,7 +797,11 @@ APP.downloadPage = async function(noteId, pageId){
   /* ✅ SINGLE FILE */
   if(path.length === 1){
 
-    const { jsPDF } = window.jspdf;
+    const jsPDF = window.jspdf?.jsPDF;
+    if(!jsPDF){
+      alert("PDF library not loaded");
+      return;
+    }
     const pdf = new jsPDF();
 
     const lines = pdf.splitTextToSize(content, 180);
@@ -813,7 +821,11 @@ APP.downloadPage = async function(noteId, pageId){
     folder = folder.folder(path[i]);
   }
 
-  const { jsPDF } = window.jspdf;
+  const jsPDF = window.jspdf?.jsPDF;
+  if(!jsPDF){
+    alert("PDF library not loaded");
+    return;
+  }
   const pdf = new jsPDF();
 
   const lines = pdf.splitTextToSize(content, 180);
@@ -860,3 +872,31 @@ window.addEventListener("popstate", async (e)=>{
   }
 
 });
+
+
+
+window.goBack = function(){
+
+  const state = history.state;
+
+  // if no state → go to main apps
+  if(!state){
+    window.location.href = "/app";
+    return;
+  }
+
+  // editor → pages
+  if(state.screen === "editor"){
+    history.back();
+    return;
+  }
+
+  // pages → home (notes list)
+  if(state.screen === "pages"){
+    loadNotesApp();
+    return;
+  }
+
+  // home → main apps
+  window.location.href = "/app";
+};
