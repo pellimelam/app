@@ -40,16 +40,6 @@ function getFontSizeExtension(){
 
 
 
-
-
-
-
-
-
-
-
-
-
 const APP = {};
 
 let __currentNoteId = null;
