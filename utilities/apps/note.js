@@ -665,7 +665,7 @@ pageEl.addEventListener("paste", (e)=>{
 
 /* AUTO PAGE BREAK */
 pageEl.addEventListener("input", autoPaginate);
-
+};
 
 
 
