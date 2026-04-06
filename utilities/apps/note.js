@@ -44,7 +44,7 @@ function getFontSizeExtension(){
 
 
 
-const APP = {};
+window.APP = {};
 
 let __currentNoteId = null;
 
@@ -691,13 +691,6 @@ if(APP.editor){
       types: ['heading', 'paragraph'],
     }),
 
-    window.tiptapHeading?.Heading.configure({
-      levels: [1,2,3,4,5,6],
-    }),
-
-    window.tiptapBulletList?.BulletList,
-    window.tiptapOrderedList?.OrderedList,
-    window.tiptapListItem?.ListItem,
   ].filter(Boolean),
 
   content: page.content || "<p></p>",
@@ -1035,7 +1028,6 @@ window.goBack = function(){
   // home → main apps
   window.location.href = "/app";
 };
-
 
 
 
