@@ -653,18 +653,7 @@ view.innerHTML = `
 const editorDiv = document.getElementById("editor");
 
 editorDiv.innerHTML = `
-<div id="editorInner" style="
-  height:100%;
-  background:#ffffff;
-  color:#000000;
-  font-size:16px;
-  line-height:1.6;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  border-radius:12px;
-  padding:20px;
-  outline:none;
-  overflow:auto;
-"></div>
+<div id="editorInner"></div>
 `;
 
 /* DESTROY OLD */
