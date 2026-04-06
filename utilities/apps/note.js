@@ -1,33 +1,41 @@
+function getFontSizeExtension(){
+  try {
+    if(!window.tiptap || !window.tiptap.Extension){
+      return null;
+    }
 
-const FontSize = window.tiptap.Extension.create({
-  name: 'fontSize',
+    return window.tiptap.Extension.create({
+      name: 'fontSize',
 
-  addGlobalAttributes() {
-    return [{
-      types: ['textStyle'],
-      attributes: {
-        fontSize: {
-          default: null,
-          parseHTML: el => el.style.fontSize,
-          renderHTML: attrs => {
-            if (!attrs.fontSize) return {};
-            return { style: `font-size:${attrs.fontSize}` };
+      addGlobalAttributes() {
+        return [{
+          types: ['textStyle'],
+          attributes: {
+            fontSize: {
+              default: null,
+              parseHTML: el => el.style.fontSize,
+              renderHTML: attrs => {
+                if (!attrs.fontSize) return {};
+                return { style: `font-size:${attrs.fontSize}` };
+              }
+            }
           }
-        }
+        }];
+      },
+
+      addCommands() {
+        return {
+          setFontSize: size => ({ chain }) =>
+            chain().setMark('textStyle', { fontSize: size }).run()
+        };
       }
-    }];
-  },
+    });
 
-  addCommands() {
-    return {
-      setFontSize: size => ({ chain }) =>
-        chain().setMark('textStyle', { fontSize: size }).run()
-    };
+  } catch(e){
+    console.error("FontSize init failed", e);
+    return null;
   }
-});
-
-
-
+}
 
 
 
@@ -679,7 +687,7 @@ APP.editor = new window.tiptap.Editor({
     window.tiptapColor?.Color,
     window.tiptapFontFamily?.FontFamily,
 
-    FontSize,
+    getFontSizeExtension(),
 
     window.tiptapTextAlign?.TextAlign.configure({
       types: ['heading', 'paragraph'],
