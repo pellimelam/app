@@ -653,6 +653,12 @@ if(APP.editor){
 }
 
 /* INIT NEW */
+if(!window.tiptap || !window.tiptap.Editor){
+  console.error("TipTap NOT LOADED", window.tiptap);
+  alert("Editor failed to load. Reload page.");
+  return;
+}
+
 APP.editor = new window.tiptap.Editor({
 
   element: document.querySelector("#editorInner"),
