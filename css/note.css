@@ -1,62 +1,59 @@
 /* =========================
-NOTE APP – WORLD CLASS EDITOR
+NOTE APP – FINAL WORLD-CLASS EDITOR
 ========================= */
 
-/* MAIN CONTENT WRAPPER */
-.note-app .editor-content {
-  min-height: 100%;
-  padding: 20px;
+/* MAIN EDITOR CONTAINER */
+.note-app #editor {
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+  max-width: 794px;
+  margin: auto;
 
-  color: #111827; /* 🔥 FIX: text visible */
-  background: #ffffff;
-
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-/* PROSEMIRROR ROOT */
-.note-app .editor-content .ProseMirror {
-  min-height: 100%;
-  outline: none;
-  caret-color: #111827;
-}
-
-/* MAIN EDITOR BOX */
-.note-app #editorInner {
-  height: 100%;
   background: #ffffff;
   border-radius: 12px;
-
-  padding: 24px; /* 🔥 IMPORTANT FIX */
 
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   transition: box-shadow 0.2s ease;
 
+  position: relative;
   overflow: visible;
 }
 
-/* TEXT AREA */
-.note-app #editorInner .ProseMirror {
+/* FOCUS EFFECT */
+.note-app #editor:focus-within {
+  box-shadow: 0 6px 25px rgba(37,99,235,0.15);
+}
+
+/* PROSEMIRROR ROOT */
+.note-app .ProseMirror {
   min-height: 300px;
 
-  color: #111827; /* 🔥 FIX TEXT INVISIBLE BUG */
+  padding: 24px; /* 🔥 correct padding placement */
+
+  color: #111827;
   font-size: 16px;
   line-height: 1.7;
   font-family: 'Segoe UI', Arial, sans-serif;
+
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  caret-color: #2563eb;
 
   outline: none !important;
   border: none !important;
   box-shadow: none !important;
 
-  white-space: pre-wrap;
+  position: relative;
+  z-index: 1;
 }
 
-/* FOCUS EFFECT */
-.note-app #editorInner:focus-within {
-  box-shadow: 0 6px 25px rgba(37,99,235,0.15);
+/* FORCE REMOVE ANY DEFAULT INPUT STYLES */
+.note-app .ProseMirror,
+.note-app .ProseMirror * {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
 }
 
 /* PLACEHOLDER */
@@ -68,7 +65,7 @@ NOTE APP – WORLD CLASS EDITOR
   height: 0;
 }
 
-/* PAGE BREAK */
+/* PAGE BREAK VISUAL */
 .note-app .a4-page-break {
   height: 40px;
   margin: 40px 0;
@@ -88,72 +85,47 @@ NOTE APP – WORLD CLASS EDITOR
   color: #888;
 }
 
-/* DESKTOP A4 */
-@media (min-width: 768px){
-  .note-app .editor-content {
-    width: 794px;
-    margin: auto;
-  }
-}
+/* =========================
+MOBILE – PERFECT UX
+========================= */
 
-/* MOBILE PERFECT UX */
 @media (max-width:768px){
 
-  .note-app #editorWrapper{
-    max-width:100% !important;
-    border-radius:0 !important;
+  .note-app #editor {
+    max-width: 100%;
+    border-radius: 0;
   }
 
-  .note-app #editorInner{
-    border-radius:0;
-    padding:16px;
-  }
-
-  .note-app .editor-content{
-    font-size:17px;
-    line-height:1.8;
+  .note-app .ProseMirror {
+    padding: 16px;
+    font-size: 17px;
+    line-height: 1.8;
   }
 
 }
 
-/* SCROLL FIX */
+/* =========================
+SCROLL FIX
+========================= */
+
 .note-app {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* TOUCH */
+/* =========================
+TOUCH OPTIMIZATION
+========================= */
+
 .note-app button {
   touch-action: manipulation;
 }
 
-/* SELECTION */
+/* =========================
+TEXT SELECTION UX
+========================= */
+
 .note-app ::selection {
   background: rgba(37, 99, 235, 0.25);
 }
-
-
-.note-app .ProseMirror {
-  position: relative;
-  z-index: 1;
-  color: #111827;
-}
-
-.note-app #editorInner {
-  position: relative;
-}
-
-.note-app .ProseMirror * {
-  color: inherit !important;
-}
-
-.note-app .ProseMirror {
-  caret-color: #2563eb;
-}
-
-
-
-
-
-
