@@ -61,6 +61,25 @@ word-break:break-word;
 }
 
 
+#editorInner {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: auto;
+}
+
+#editorInner .ProseMirror {
+  min-height: 100%;
+  padding: 20px;
+  color: #000000;
+  font-size: 16px;
+  line-height: 1.6;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  outline: none;
+  caret-color: black;
+}
+
+
 
 /* WRAPPER */
 
