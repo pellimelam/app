@@ -42,32 +42,13 @@ word-break:break-word;
 
 
 .editor-content {
-  width: 794px;
-  margin: auto;
-  background: white;
-  padding: 40px;
-  min-height: 1123px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-/* page break line */
-.editor-content hr {
-  border: none;
-  border-top: 1px dashed #bbb;
-  margin: 40px 0;
-  position: relative;
-}
-
-.editor-content hr::after {
-  content: "Page Break";
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  padding: 0 8px;
-  font-size: 11px;
-  color: #888;
+  height: 100%;
+  padding: 20px;
+  background: #ffffff;
+  color: #000000;
+  font-size: 16px;
+  line-height: 1.6;
+  outline: none;
 }
 
 .editor-content .ProseMirror {
@@ -491,4 +472,3 @@ font-size:16px;
 color:#94a3b8;
 margin-bottom:14px;
 }
-
