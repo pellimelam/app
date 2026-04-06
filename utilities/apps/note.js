@@ -806,58 +806,8 @@ APP.exportNote = async function(id){
     temp.innerHTML = page.content || "<p></p>";
     document.body.appendChild(temp);
    
-    const canvas = await html2canvas(temp, {
-      scale: 3,   // 🔥 HIGH QUALITY
-      useCORS: true
-    });
+    const blob = await generateHighQualityPDF(page.content || "");
 
-    document.body.removeChild(temp);
-
-    const imgWidth = 794;
-    const pageHeight = 1123;
-
-    const imgHeight = canvas.height * imgWidth / canvas.width;
-
-    const jsPDF = window.jspdf.jsPDF;
-    const pdf = new jsPDF({
-      unit: "px",
-      format: [imgWidth, pageHeight]
-    });
-
-    let position = 0;
-
-    while(position < imgHeight){
-
-      const pageCanvas = document.createElement("canvas");
-      pageCanvas.width = canvas.width;
-      pageCanvas.height = pageHeight * canvas.width / imgWidth;
-
-      const ctx = pageCanvas.getContext("2d");
-
-      ctx.drawImage(
-        canvas,
-        0,
-        position * canvas.width / imgWidth,
-        canvas.width,
-        pageCanvas.height,
-        0,
-        0,
-        canvas.width,
-        pageCanvas.height
-      );
-
-      const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
-
-      if(position > 0){
-        pdf.addPage();
-      }
-
-      pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
-
-      position += pageHeight;
-    }
-
-    const blob = pdf.output("blob");
     folder.file(path[path.length - 1], blob);
     
   }
@@ -899,8 +849,6 @@ function getFileMeta(name){
 
 
 APP.downloadPage = async function(noteId, pageId){
-  if(APP.__downloading) return;
-  APP.__downloading = true;
 
   const notes = await getNotes();
   const note = notes.find(n => n.id === noteId);
@@ -911,71 +859,12 @@ APP.downloadPage = async function(noteId, pageId){
 
   const meta = getFileMeta(page.name);
 
-  const temp = document.createElement("div");
-  temp.style.position = "fixed";
-  temp.style.left = "-9999px";
-  temp.style.top = "0";
-  temp.style.width = "794px";
-  temp.style.background = "#fff";
-  temp.style.padding = "20px";
+  const blob = await generateHighQualityPDF(page.content || "");
 
-  temp.innerHTML = page.content || "<p></p>";
-  document.body.appendChild(temp);
-
-  const canvas = await html2canvas(temp, {
-    scale: 3,   // 🔥 HIGH QUALITY
-    useCORS: true
-  });
-
-  document.body.removeChild(temp);
-
-  const imgWidth = 794;
-  const pageHeight = 1123;
-
-  const imgHeight = canvas.height * imgWidth / canvas.width;
-
-  const jsPDF = window.jspdf.jsPDF;
-  const pdf = new jsPDF({
-    unit: "px",
-    format: [imgWidth, pageHeight]
-  });
-
-  let position = 0;
-
-  while(position < imgHeight){
-
-    const pageCanvas = document.createElement("canvas");
-    pageCanvas.width = canvas.width;
-    pageCanvas.height = pageHeight * canvas.width / imgWidth;
-
-    const ctx = pageCanvas.getContext("2d");
-
-    ctx.drawImage(
-      canvas,
-      0,
-      position * canvas.width / imgWidth,
-      canvas.width,
-      pageCanvas.height,
-      0,
-      0,
-      canvas.width,
-      pageCanvas.height
-    );
-
-    const imgData = pageCanvas.toDataURL("image/jpeg", 1.0); // 🔥 BEST QUALITY
-
-    if(position > 0){
-      pdf.addPage();
-    }
-
-    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
-
-    position += pageHeight;
-  }
-
-  pdf.save(meta.fileName);
-  
-  APP.__downloading = false;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = meta.fileName;
+  a.click();
 };
 
 
@@ -1031,3 +920,74 @@ window.goBack = function(){
   // home → main apps
   window.location.href = "/app";
 };
+
+
+
+
+async function generateHighQualityPDF(htmlContent){
+
+  const temp = document.createElement("div");
+  temp.style.position = "fixed";
+  temp.style.left = "-9999px";
+  temp.style.top = "0";
+  temp.style.width = "794px";
+  temp.style.background = "#ffffff";
+  temp.style.padding = "40px";
+  temp.style.fontFamily = "Segoe UI, Arial";
+
+  temp.innerHTML = htmlContent || "<p></p>";
+  document.body.appendChild(temp);
+
+  const canvas = await html2canvas(temp, {
+    scale: 4,   // 🔥 ULTRA HD
+    useCORS: true
+  });
+
+  document.body.removeChild(temp);
+
+  const imgWidth = 794;
+  const pageHeight = 1123;
+
+  const imgHeight = canvas.height * imgWidth / canvas.width;
+
+  const jsPDF = window.jspdf.jsPDF;
+  const pdf = new jsPDF({
+    unit: "px",
+    format: [imgWidth, pageHeight]
+  });
+
+  let position = 0;
+
+  while(position < imgHeight){
+
+    const pageCanvas = document.createElement("canvas");
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = pageHeight * canvas.width / imgWidth;
+
+    const ctx = pageCanvas.getContext("2d");
+
+    ctx.drawImage(
+      canvas,
+      0,
+      position * canvas.width / imgWidth,
+      canvas.width,
+      pageCanvas.height,
+      0,
+      0,
+      canvas.width,
+      pageCanvas.height
+    );
+
+    const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
+
+    if(position > 0){
+      pdf.addPage();
+    }
+
+    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
+
+    position += pageHeight;
+  }
+
+  return pdf.output("blob");
+}
