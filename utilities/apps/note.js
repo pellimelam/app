@@ -15,7 +15,7 @@ function loadNoteCSS(){
   const link = document.createElement("link");
   link.id = "note-css";
   link.rel = "stylesheet";
-  link.href = "/css/apps/note.css";
+  link.href = "./css/apps/note.css";
 
   document.head.appendChild(link);
 }
