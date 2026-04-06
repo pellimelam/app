@@ -1,49 +1,3 @@
-console.log("TipTap check:", window.tiptap);
-
-
-function getFontSizeExtension(){
-  try {
-    if(!window.tiptap || !window.tiptap.Extension){
-      return null;
-    }
-
-    return window.tiptap.Extension.create({
-      name: 'fontSize',
-
-      addGlobalAttributes() {
-        return [{
-          types: ['textStyle'],
-          attributes: {
-            fontSize: {
-              default: null,
-              parseHTML: el => el.style.fontSize,
-              renderHTML: attrs => {
-                if (!attrs.fontSize) return {};
-                return { style: `font-size:${attrs.fontSize}` };
-              }
-            }
-          }
-        }];
-      },
-
-      addCommands() {
-        return {
-          setFontSize: size => ({ chain }) => {
-            return chain().setMark('textStyle', { fontSize: size }).run();
-          }
-        };
-      }
-    });
-
-  } catch(e){
-    console.error("FontSize init failed", e);
-    return null;
-  }
-}
-
-
-
-
 window.APP = {};
 
 let __currentNoteId = null;
@@ -618,7 +572,7 @@ view.innerHTML = `
       <option value="Verdana">Verdana</option>
     </select>
 
-    <select onchange="if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().setFontSize(this.value).run(); }">
+    <select onchange="if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().setMark('textStyle', { fontSize: this.value }).run(); }">
       <option value="">Size</option>
       <option value="12px">12</option>
       <option value="14px">14</option>
@@ -685,7 +639,7 @@ if(APP.editor){
     window.tiptapColor?.Color,
     window.tiptapFontFamily?.FontFamily,
 
-    getFontSizeExtension(),
+
 
     window.tiptapTextAlign?.TextAlign.configure({
       types: ['heading', 'paragraph'],
@@ -762,8 +716,6 @@ openNote(noteId);
 
 
 
-
-
 APP.exportNote = async function(id){
 
   const notes = await getNotes();
@@ -779,41 +731,9 @@ APP.exportNote = async function(id){
 
     const page = note.pages[i];
 
-    // convert HTML → proper text (same as downloadPage)
-    const temp = document.createElement("div");
-    temp.innerHTML = page.content || "";
-
-    let text = "";
-
-    function parseNode(node){
-      if(node.nodeType === Node.TEXT_NODE){
-        text += node.nodeValue;
-      }
-
-      if(node.nodeType === Node.ELEMENT_NODE){
-
-        if(node.tagName === "BR"){
-          text += "\n";
-        }
-
-        node.childNodes.forEach(parseNode);
-
-        if(["DIV","P"].includes(node.tagName)){
-          text += "\n";
-        }
-      }
-    }
-
-    temp.childNodes.forEach(parseNode);
-
-    const content = text
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
-
     const meta = getFileMeta(page.name || `Page_${i+1}`);
     const path = meta.fileName.split("/").filter(Boolean);
 
-    // create nested folders
     let folder = zip;
 
     for(let j = 0; j < path.length - 1; j++){
@@ -822,21 +742,30 @@ APP.exportNote = async function(id){
 
     const jsPDF = window.jspdf.jsPDF;
 
-    if(!jsPDF){
-      alert("PDF failed. Reload page once.");
-      return;
-    }
+    const pdf = new jsPDF({
+      unit: "px",
+      format: "a4"
+    });
 
-    const pdf = new jsPDF();
+    // 🔥 REAL DOM
+    const temp = document.createElement("div");
+    temp.style.padding = "20px";
+    temp.style.background = "#fff";
+    temp.innerHTML = page.content || "<p></p>";
 
-    const lines = pdf.splitTextToSize(content, 180);
-    pdf.text(lines, 10, 10);
+    document.body.appendChild(temp);
+
+    await pdf.html(temp, {
+      x: 10,
+      y: 10,
+      html2canvas: { scale: 0.6 }
+    });
+
+    document.body.removeChild(temp);
 
     const pdfBlob = pdf.output("blob");
 
     folder.file(path[path.length - 1], pdfBlob);
-
- 
   }
 
   const blob = await zip.generateAsync({ type: "blob" });
@@ -845,8 +774,8 @@ APP.exportNote = async function(id){
   a.href = URL.createObjectURL(blob);
   a.download = (note.title || "note") + ".zip";
   a.click();
-
 };
+
 
 
 
@@ -886,94 +815,33 @@ APP.downloadPage = async function(noteId, pageId){
   const page = note.pages.find(p => p.id === pageId);
   if(!page) return;
 
-  // convert HTML → text
-  const temp = document.createElement("div");
-  temp.innerHTML = page.content || "";
-
-  let text = "";
-
-  function parseNode(node){
-    if(node.nodeType === Node.TEXT_NODE){
-      text += node.nodeValue;
-    }
-
-    if(node.nodeType === Node.ELEMENT_NODE){
-
-      if(node.tagName === "BR"){
-        text += "\n";
-      }
-
-      node.childNodes.forEach(parseNode);
-
-      if(["DIV","P"].includes(node.tagName)){
-        text += "\n";
-      }
-    }
-  }
-
-  temp.childNodes.forEach(parseNode);
-
-  const content = text
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
   const meta = getFileMeta(page.name);
-  const path = meta.fileName.split("/").filter(Boolean);
-
-  /* ✅ SINGLE FILE */
-  if(path.length === 1){
-
-    const jsPDF = window.jspdf.jsPDF;
-
-    if(!jsPDF){
-      alert("PDF failed. Reload page once.");
-      return;
-    }
-    const pdf = new jsPDF();
-
-    const lines = pdf.splitTextToSize(content, 180);
-    pdf.text(lines, 10, 10);
-
-    pdf.save(meta.fileName);
-
-    return;
-  }
-
-  /* ✅ FOLDER → ZIP */
-  const zip = new JSZip();
-
-  let folder = zip;
-
-  for(let i = 0; i < path.length - 1; i++){
-    folder = folder.folder(path[i]);
-  }
 
   const jsPDF = window.jspdf.jsPDF;
 
-  if(!jsPDF){
-    alert("PDF failed. Reload page once.");
-    return;
-  }
-  const pdf = new jsPDF();
+  const pdf = new jsPDF({
+    unit: "px",
+    format: "a4"
+  });
 
-  const lines = pdf.splitTextToSize(content, 180);
-  pdf.text(lines, 10, 10);
+  // 🔥 CREATE REAL DOM
+  const temp = document.createElement("div");
+  temp.style.padding = "20px";
+  temp.style.background = "#fff";
+  temp.innerHTML = page.content || "<p></p>";
 
-  const pdfBlob = pdf.output("blob");
+  document.body.appendChild(temp);
 
-  folder.file(path[path.length - 1], pdfBlob);
+  await pdf.html(temp, {
+    x: 10,
+    y: 10,
+    html2canvas: { scale: 0.6 }
+  });
 
-  const blob = await zip.generateAsync({ type: "blob" });
+  document.body.removeChild(temp);
 
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = (path[0] || "note") + ".zip";
-  a.click();
-
+  pdf.save(meta.fileName);
 };
-
-
-
 
 
 window.addEventListener("popstate", async (e)=>{
@@ -1028,6 +896,5 @@ window.goBack = function(){
   // home → main apps
   window.location.href = "/app";
 };
-
 
 
