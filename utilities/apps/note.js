@@ -643,7 +643,6 @@ if(APP.editor){
 
     window.tiptapUnderline?.Underline,
     window.tiptapHighlight?.Highlight,
-    window.tiptapTextStyle?.TextStyle,
     window.tiptapColor?.Color,
     window.tiptapFontFamily?.FontFamily,
     window.tiptapTextStyle?.TextStyle.extend({
