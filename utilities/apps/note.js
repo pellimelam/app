@@ -590,65 +590,43 @@ view.innerHTML = `
   </div>
 
   <!-- EDITOR -->
-  <div style="background:#e5e7eb;padding:30px;">
-    <div id="pageContainer" style="display:flex;flex-direction:column;align-items:center;gap:20px;"></div>
+  <div style="display:flex;justify-content:center;background:#e5e7eb;padding:20px;">
+    <div style="
+      width:794px;
+      background:white;
+      box-shadow:0 0 10px rgba(0,0,0,0.1);
+      border-radius:8px;
+    ">
+      <div id="editor" style="
+        min-height:1123px;
+        padding:40px;
+      ">
+        <div style="padding:20px;">Loading editor...</div>
+      </div>
+    </div>
   </div>
 
 `;
 
 
-function renderPagesView(){
-
-  const container = document.getElementById("pageContainer");
-  if(!container || !APP.editor) return;
-
-  container.innerHTML = "";
-
-  const content = APP.editor.getHTML();
-
-  const temp = document.createElement("div");
-  temp.innerHTML = content;
-
-  const pageHeight = 1123;
-  let currentPage = createPage();
-
-  container.appendChild(currentPage);
-
-  Array.from(temp.childNodes).forEach(node => {
-
-    currentPage.appendChild(node.cloneNode(true));
-
-    if(currentPage.scrollHeight > pageHeight){
-
-      currentPage.removeChild(currentPage.lastChild);
-
-      currentPage = createPage();
-      container.appendChild(currentPage);
-
-      currentPage.appendChild(node.cloneNode(true));
-    }
-
-  });
-}
-
-function createPage(){
-  const page = document.createElement("div");
-  page.className = "a4-page";
-  return page;
-}
-
-  
-
 APP.insertPageBreak = function(){
   if(!APP.editor) return;
 
   APP.editor.commands.focus();
-  APP.editor.chain().setHorizontalRule().run();
+
+  APP.editor.chain().insertContent(`
+    <div class="a4-page-break"></div>
+  `).run();
 };
 
 
-  
 
+  
+const editorDiv = document.getElementById("editor");
+
+editorDiv.innerHTML = `
+<div id="editorInner"></div>
+`;
 
 /* DESTROY OLD */
 if(APP.editor){
@@ -674,7 +652,7 @@ if(APP.editor){
 
   APP.editor = new window.tiptap.Editor({
 
-  element: document.getElementById("pageContainer"),
+  element: document.querySelector("#editorInner"),
 
   extensions: [
     window.tiptapStarterKit.StarterKit,
@@ -720,7 +698,6 @@ if(APP.editor){
     return ({ editor }) => {
 
       clearTimeout(saveTimer);
-      renderPagesView(); 
 
       saveTimer = setTimeout(async () => {
         try {
@@ -1029,5 +1006,4 @@ window.goBack = function(){
   // home → main apps
   window.location.href = "/app";
 };
-
 
