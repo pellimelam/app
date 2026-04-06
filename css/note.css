@@ -1,53 +1,74 @@
 /* =========================
-NOTE APP – SCOPED STYLES
+NOTE APP – WORLD CLASS EDITOR
 ========================= */
 
+/* MAIN CONTENT WRAPPER */
 .note-app .editor-content {
   min-height: 100%;
-  padding: 16px;
+  padding: 20px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+
+  color: #111827; /* 🔥 FIX: text visible */
+  background: #ffffff;
+
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
+/* PROSEMIRROR ROOT */
 .note-app .editor-content .ProseMirror {
   min-height: 100%;
   outline: none;
+  caret-color: #111827;
 }
 
-/* MAIN EDITOR CONTAINER */
+/* MAIN EDITOR BOX */
 .note-app #editorInner {
   height: 100%;
   background: #ffffff;
   border-radius: 12px;
+
+  padding: 24px; /* 🔥 IMPORTANT FIX */
+
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s ease;
+
   overflow: visible;
-  padding-bottom: 120px; /* 🔥 prevents keyboard overlap */
 }
 
 /* TEXT AREA */
 .note-app #editorInner .ProseMirror {
-  min-height: 100%;
-  padding: 0; /* 🔥 remove double padding */
-  color: #000000;
+  min-height: 300px;
+
+  color: #111827; /* 🔥 FIX TEXT INVISIBLE BUG */
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
   font-family: 'Segoe UI', Arial, sans-serif;
-  outline: none;
-  caret-color: black;
+
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  white-space: pre-wrap;
 }
 
-/* PAGE CONTENT BEHAVIOR */
-.note-app .editor-content > * {
-  page-break-inside: avoid;
+/* FOCUS EFFECT */
+.note-app #editorInner:focus-within {
+  box-shadow: 0 6px 25px rgba(37,99,235,0.15);
 }
 
-/* PAGE BREAK LOGIC */
-.note-app .a4-page-break {
-  page-break-after: always;
+/* PLACEHOLDER */
+.note-app .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+  float: left;
+  height: 0;
 }
 
+/* PAGE BREAK */
 .note-app .a4-page-break {
   height: 40px;
   margin: 40px 0;
@@ -67,10 +88,7 @@ NOTE APP – SCOPED STYLES
   color: #888;
 }
 
-/* =========================
-DESKTOP A4 VIEW
-========================= */
-
+/* DESKTOP A4 */
 @media (min-width: 768px){
   .note-app .editor-content {
     width: 794px;
@@ -78,10 +96,7 @@ DESKTOP A4 VIEW
   }
 }
 
-/* =========================
-MOBILE OPTIMIZATION (BEST UX)
-========================= */
-
+/* MOBILE PERFECT UX */
 @media (max-width:768px){
 
   .note-app #editorWrapper{
@@ -89,45 +104,31 @@ MOBILE OPTIMIZATION (BEST UX)
     border-radius:0 !important;
   }
 
-  .note-app #editor{
-    padding:14px !important;
+  .note-app #editorInner{
+    border-radius:0;
+    padding:16px;
   }
 
   .note-app .editor-content{
-    font-size:17px;   /* 🔥 better typing */
-    line-height:1.7;
+    font-size:17px;
+    line-height:1.8;
   }
 
 }
 
-/* =========================
-SCROLL + KEYBOARD FIX
-========================= */
-
+/* SCROLL FIX */
 .note-app {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.note-app #appView {
-  height: 100vh;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* =========================
-TOUCH IMPROVEMENTS
-========================= */
-
+/* TOUCH */
 .note-app button {
   touch-action: manipulation;
 }
 
-/* =========================
-SELECTION (NICE UX)
-========================= */
-
+/* SELECTION */
 .note-app ::selection {
   background: rgba(37, 99, 235, 0.25);
 }
