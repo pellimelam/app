@@ -9,11 +9,22 @@ APP REGISTRY
 
 window.__apps = window.__apps || {};
 
+function loadNoteCSS(){
+  if(document.getElementById("note-css")) return;
+
+  const link = document.createElement("link");
+  link.id = "note-css";
+  link.rel = "stylesheet";
+  link.href = "/css/apps/note.css";
+
+  document.head.appendChild(link);
+}
+
 window.__apps["note"] = async function(){
+  loadNoteCSS();   // ✅ ADD THIS
   Object.assign(window, APP);
   await loadNotesApp();
 };
-
 
 
 
@@ -106,7 +117,7 @@ if(!view) return;
 
 view.innerHTML = `
 
-<div class="container">
+<div class="container note-app">
 
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
 
@@ -290,7 +301,7 @@ const view = document.getElementById("appView");
 
 view.innerHTML = `
 
-<div class="container">
+<div class="container note-app">
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
 
@@ -537,7 +548,7 @@ const view = document.getElementById("appView");
 
 view.innerHTML = `
 
-<div class="container">
+<div class="container note-app">
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
     <button class="btn btn-outline" onclick="goBack()">← Back</button>
@@ -545,7 +556,18 @@ view.innerHTML = `
   </div>
 
   <!-- TOOLBAR -->
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+  <div style="
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:#020617;
+    padding:8px;
+    display:flex;
+    gap:6px;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    border-bottom:1px solid #1e293b;
+  ">
 
     <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleBold().run(); }">B</button>
     <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleItalic().run(); }">I</button>
@@ -590,16 +612,22 @@ view.innerHTML = `
   </div>
 
   <!-- EDITOR -->
-  <div style="display:flex;justify-content:center;background:#e5e7eb;padding:20px;">
-    <div style="
-      width:794px;
+  <div style="
+    width:100%;
+    background:#e5e7eb;
+    padding:0;
+  ">
+
+    <div id="editorWrapper" style="
+      width:100%;
+      max-width:794px;
+      margin:auto;
       background:white;
-      box-shadow:0 0 10px rgba(0,0,0,0.1);
-      border-radius:8px;
     ">
+
       <div id="editor" style="
-        min-height:1123px;
-        padding:40px;
+        min-height:100vh;
+        padding:16px;
       ">
         <div style="padding:20px;">Loading editor...</div>
       </div>
