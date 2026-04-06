@@ -615,10 +615,7 @@ APP.insertPageBreak = function(){
   APP.editor.commands.focus();
 
   APP.editor.chain().insertContent(`
-    <div class="page-break">
-      <div class="page-break-line"></div>
-      <div class="page-break-text">Page Break</div>
-    </div>
+    <div class="a4-page-break"></div>
   `).run();
 };
 
