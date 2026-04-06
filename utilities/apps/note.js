@@ -805,9 +805,9 @@ APP.exportNote = async function(id){
 
     temp.innerHTML = page.content || "<p></p>";
     document.body.appendChild(temp);
-
+   
     const canvas = await html2canvas(temp, {
-      scale: 1,
+      scale: 3,   // 🔥 HIGH QUALITY
       useCORS: true
     });
 
@@ -846,19 +846,20 @@ APP.exportNote = async function(id){
         pageCanvas.height
       );
 
-      const imgData = pageCanvas.toDataURL("image/png");
+      const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
 
       if(position > 0){
         pdf.addPage();
       }
 
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, pageHeight);
+      pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
 
       position += pageHeight;
     }
 
     const blob = pdf.output("blob");
     folder.file(path[path.length - 1], blob);
+    
   }
 
   const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -922,7 +923,7 @@ APP.downloadPage = async function(noteId, pageId){
   document.body.appendChild(temp);
 
   const canvas = await html2canvas(temp, {
-    scale: 1,
+    scale: 3,   // 🔥 HIGH QUALITY
     useCORS: true
   });
 
@@ -961,18 +962,19 @@ APP.downloadPage = async function(noteId, pageId){
       pageCanvas.height
     );
 
-    const imgData = pageCanvas.toDataURL("image/png");
+    const imgData = pageCanvas.toDataURL("image/jpeg", 1.0); // 🔥 BEST QUALITY
 
     if(position > 0){
       pdf.addPage();
     }
 
-    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, pageHeight);
+    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
 
     position += pageHeight;
   }
 
   pdf.save(meta.fileName);
+  
   APP.__downloading = false;
 };
 
