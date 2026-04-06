@@ -18,6 +18,8 @@ NOTE APP – FINAL WORLD-CLASS EDITOR
   overflow: visible;
 }
 
+
+
 /* FOCUS EFFECT */
 .note-app #editor:focus-within {
   box-shadow: 0 6px 25px rgba(37,99,235,0.15);
