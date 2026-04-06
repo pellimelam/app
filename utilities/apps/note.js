@@ -1,3 +1,47 @@
+
+const FontSize = window.tiptap.Extension.create({
+  name: 'fontSize',
+
+  addGlobalAttributes() {
+    return [{
+      types: ['textStyle'],
+      attributes: {
+        fontSize: {
+          default: null,
+          parseHTML: el => el.style.fontSize,
+          renderHTML: attrs => {
+            if (!attrs.fontSize) return {};
+            return { style: `font-size:${attrs.fontSize}` };
+          }
+        }
+      }
+    }];
+  },
+
+  addCommands() {
+    return {
+      setFontSize: size => ({ chain }) =>
+        chain().setMark('textStyle', { fontSize: size }).run()
+    };
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const APP = {};
 
 let __currentNoteId = null;
@@ -541,43 +585,68 @@ view.innerHTML = `
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
     <button class="btn btn-outline" onclick="goBack()">← Back</button>
-
     <strong>${page.name || "Untitled"}</strong>
   </div>
 
-  <div class="editor-toolbar" style="display:flex;gap:6px;flex-wrap:wrap;">
+  <!-- TOOLBAR -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
 
-  <button onclick="APP.editor.chain().focus().toggleBold().run()">B</button>
-  <button onclick="APP.editor.chain().focus().toggleItalic().run()">I</button>
-  <button onclick="APP.editor.chain().focus().toggleUnderline().run()">U</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleBold().run()">B</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleItalic().run()">I</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleUnderline().run()">U</button>
 
-  <button onclick="APP.editor.chain().focus().toggleHeading({ level: 1 }).run()">H1</button>
-  <button onclick="APP.editor.chain().focus().toggleHeading({ level: 2 }).run()">H2</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleHeading({ level: 1 }).run()">H1</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleHeading({ level: 2 }).run()">H2</button>
 
-  <button onclick="APP.editor.chain().focus().toggleBulletList().run()">• List</button>
-  <button onclick="APP.editor.chain().focus().toggleOrderedList().run()">1. List</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleBulletList().run()">•</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleOrderedList().run()">1.</button>
 
-  <button onclick="APP.editor.chain().focus().setTextAlign('left').run()">Left</button>
-  <button onclick="APP.editor.chain().focus().setTextAlign('center').run()">Center</button>
-  <button onclick="APP.editor.chain().focus().setTextAlign('right').run()">Right</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().setTextAlign('left').run()">L</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().setTextAlign('center').run()">C</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().setTextAlign('right').run()">R</button>
 
-  <button onclick="APP.editor.chain().focus().toggleHighlight().run()">Highlight</button>
+    <input type="color"
+      onchange="if(APP.editor) APP.editor.chain().focus().setColor(this.value).run()" />
 
-  <button onclick="APP.editor.chain().focus().undo().run()">Undo</button>
-  <button onclick="APP.editor.chain().focus().redo().run()">Redo</button>
+    <select onchange="if(APP.editor) APP.editor.chain().focus().setFontFamily(this.value).run()">
+      <option value="">Font</option>
+      <option value="Arial">Arial</option>
+      <option value="Times New Roman">Times</option>
+      <option value="Courier New">Courier</option>
+      <option value="Verdana">Verdana</option>
+    </select>
+
+    <select onchange="if(APP.editor) APP.editor.chain().focus().setFontSize(this.value).run()">
+      <option value="">Size</option>
+      <option value="12px">12</option>
+      <option value="14px">14</option>
+      <option value="16px">16</option>
+      <option value="18px">18</option>
+      <option value="24px">24</option>
+      <option value="32px">32</option>
+    </select>
+
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleHighlight().run()">🖍</button>
+
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().undo().run()">↶</button>
+    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().redo().run()">↷</button>
 
   </div>
 
-    <div id="editor" style="height:70vh;border-radius:12px;overflow:hidden;">
-
+  <!-- EDITOR -->
+  <div id="editor" style="height:70vh;border-radius:12px;overflow:hidden;">
+    <div style="padding:20px;">Loading editor...</div>
   </div>
+
+</div>
+
 `;
 
 const editorDiv = document.getElementById("editor");
 
 editorDiv.innerHTML = `
-<div id="editorInner" contenteditable="true" style="
-  height:80vh;
+<div id="editorInner" style="
+  height:100%;
   background:#ffffff;
   color:#000000;
   font-size:16px;
@@ -590,46 +659,88 @@ editorDiv.innerHTML = `
 "></div>
 `;
 
+/* DESTROY OLD */
 if(APP.editor){
   APP.editor.destroy();
+  APP.editor = null;
 }
 
+/* INIT NEW */
 APP.editor = new window.tiptap.Editor({
+
   element: document.querySelector("#editorInner"),
 
   extensions: [
     window.tiptapStarterKit.StarterKit,
- 
-    window.tiptapUnderline.Underline,
-    window.tiptapHighlight.Highlight,
-    window.tiptapTextStyle.TextStyle,
-    window.tiptapColor.Color,
-    window.tiptapFontFamily.FontFamily,
 
-    window.tiptapTextAlign.TextAlign.configure({
+    window.tiptapUnderline?.Underline,
+    window.tiptapHighlight?.Highlight,
+    window.tiptapTextStyle?.TextStyle,
+    window.tiptapColor?.Color,
+    window.tiptapFontFamily?.FontFamily,
+
+    FontSize,
+
+    window.tiptapTextAlign?.TextAlign.configure({
       types: ['heading', 'paragraph'],
-   }),
+    }),
 
-    window.tiptapHeading.Heading.configure({
+    window.tiptapHeading?.Heading.configure({
       levels: [1,2,3,4,5,6],
     }),
 
-    window.tiptapBulletList.BulletList,
-    window.tiptapOrderedList.OrderedList,
-    window.tiptapListItem.ListItem,
-  ],
+    window.tiptapBulletList?.BulletList,
+    window.tiptapOrderedList?.OrderedList,
+    window.tiptapListItem?.ListItem,
+  ].filter(Boolean),
 
   content: page.content || "<p></p>",
 
-  onUpdate: async ({ editor }) => {
-    page.content = editor.getHTML();
-    await saveNote(note);
-  }
+  editorProps: {
+    attributes: {
+      style: `
+        height:100%;
+        padding:20px;
+        background:#ffffff;
+        color:#000;
+        font-size:16px;
+        line-height:1.6;
+        outline:none;
+      `,
+    },
+  },
+
+  onUpdate: (() => {
+    let saveTimer;
+
+    return ({ editor }) => {
+
+      clearTimeout(saveTimer);
+
+      saveTimer = setTimeout(async () => {
+        try {
+
+          const html = editor.getHTML().trim();
+
+          if(html === "<p></p>" || html === "<p></p><p></p>"){
+            page.content = "";
+          } else {
+            page.content = html;
+          }
+
+          await saveNote(note);
+
+        } catch (e) {
+          console.error("SAVE FAILED", e);
+        }
+      }, 500);
+
+    };
+  })()
 
 });
 
 };
-
 
 
 
@@ -925,7 +1036,6 @@ window.goBack = function(){
   // home → main apps
   window.location.href = "/app";
 };
-
 
 
 
