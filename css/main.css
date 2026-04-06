@@ -80,10 +80,37 @@ word-break:break-word;
 }
 
 
+.editor-content {
+  max-width: 794px;
+}
+
+.editor-content > * {
+  page-break-inside: avoid;
+}
+
+.a4-page-break {
+  page-break-after: always;
+}
 
 
+.a4-page-break {
+  height: 40px;
+  margin: 40px 0;
+  border-top: 2px dashed #bbb;
+  position: relative;
+}
 
-
+.a4-page-break::after {
+  content: "Page Break";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #888;
+}
 
 
 
