@@ -545,15 +545,26 @@ view.innerHTML = `
     <strong>${page.name || "Untitled"}</strong>
   </div>
 
-  <div class="editor-toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+  <div class="editor-toolbar" style="display:flex;gap:6px;flex-wrap:wrap;">
 
-    <button onclick="APP.editor.chain().focus().toggleBold().run()">B</button>
-    <button onclick="APP.editor.chain().focus().toggleItalic().run()">I</button>
+  <button onclick="APP.editor.chain().focus().toggleBold().run()">B</button>
+  <button onclick="APP.editor.chain().focus().toggleItalic().run()">I</button>
+  <button onclick="APP.editor.chain().focus().toggleUnderline().run()">U</button>
 
-    <button onclick="APP.editor.chain().focus().undo().run()">Undo</button>
-    <button onclick="APP.editor.chain().focus().redo().run()">Redo</button>
+  <button onclick="APP.editor.chain().focus().toggleHeading({ level: 1 }).run()">H1</button>
+  <button onclick="APP.editor.chain().focus().toggleHeading({ level: 2 }).run()">H2</button>
 
+  <button onclick="APP.editor.chain().focus().toggleBulletList().run()">• List</button>
+  <button onclick="APP.editor.chain().focus().toggleOrderedList().run()">1. List</button>
 
+  <button onclick="APP.editor.chain().focus().setTextAlign('left').run()">Left</button>
+  <button onclick="APP.editor.chain().focus().setTextAlign('center').run()">Center</button>
+  <button onclick="APP.editor.chain().focus().setTextAlign('right').run()">Right</button>
+
+  <button onclick="APP.editor.chain().focus().toggleHighlight().run()">Highlight</button>
+
+  <button onclick="APP.editor.chain().focus().undo().run()">Undo</button>
+  <button onclick="APP.editor.chain().focus().redo().run()">Redo</button>
 
   </div>
 
@@ -565,11 +576,17 @@ view.innerHTML = `
 const editorDiv = document.getElementById("editor");
 
 editorDiv.innerHTML = `
-<div id="editorInner" style="
+<div id="editorInner" contenteditable="true" style="
   height:80vh;
-  background:white;
+  background:#ffffff;
+  color:#000000;
+  font-size:16px;
+  line-height:1.6;
+  font-family: 'Segoe UI', Arial, sans-serif;
   border-radius:12px;
   padding:20px;
+  outline:none;
+  overflow:auto;
 "></div>
 `;
 
@@ -582,6 +599,24 @@ APP.editor = new window.tiptap.Editor({
 
   extensions: [
     window.tiptapStarterKit.StarterKit,
+ 
+    window.tiptapUnderline.Underline,
+    window.tiptapHighlight.Highlight,
+    window.tiptapTextStyle.TextStyle,
+    window.tiptapColor.Color,
+    window.tiptapFontFamily.FontFamily,
+
+    window.tiptapTextAlign.TextAlign.configure({
+      types: ['heading', 'paragraph'],
+   }),
+
+    window.tiptapHeading.Heading.configure({
+      levels: [1,2,3,4,5,6],
+    }),
+
+    window.tiptapBulletList.BulletList,
+    window.tiptapOrderedList.OrderedList,
+    window.tiptapListItem.ListItem,
   ],
 
   content: page.content || "<p></p>",
