@@ -204,20 +204,7 @@ Vidhwaan Foundation Platform
 
   
 
-<!-- ✅ WORKING TIPTAP GLOBAL BUILD -->
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/core@2.0.0-beta.220/dist/tiptap-core.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/starter-kit@2.0.0-beta.220/dist/tiptap-starter-kit.umd.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-underline@2.0.0-beta.220/dist/tiptap-extension-underline.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-text-align@2.0.0-beta.220/dist/tiptap-extension-text-align.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-highlight@2.0.0-beta.220/dist/tiptap-extension-highlight.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-text-style@2.0.0-beta.220/dist/tiptap-extension-text-style.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-color@2.0.0-beta.220/dist/tiptap-extension-color.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-font-family@2.0.0-beta.220/dist/tiptap-extension-font-family.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-heading@2.0.0-beta.220/dist/tiptap-extension-heading.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-bullet-list@2.0.0-beta.220/dist/tiptap-extension-bullet-list.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-ordered-list@2.0.0-beta.220/dist/tiptap-extension-ordered-list.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tiptap/extension-list-item@2.0.0-beta.220/dist/tiptap-extension-list-item.umd.js"></script>
 
 
 <!-- PDF + ZIP -->
@@ -230,13 +217,41 @@ Vidhwaan Foundation Platform
 
 <script type="module">
 
+import { Editor } from "https://esm.sh/@tiptap/core@2"
+import StarterKit from "https://esm.sh/@tiptap/starter-kit@2"
+
+import Underline from "https://esm.sh/@tiptap/extension-underline@2"
+import TextAlign from "https://esm.sh/@tiptap/extension-text-align@2"
+import Highlight from "https://esm.sh/@tiptap/extension-highlight@2"
+import TextStyle from "https://esm.sh/@tiptap/extension-text-style@2"
+import Color from "https://esm.sh/@tiptap/extension-color@2"
+import FontFamily from "https://esm.sh/@tiptap/extension-font-family@2"
+import Heading from "https://esm.sh/@tiptap/extension-heading@2"
+import BulletList from "https://esm.sh/@tiptap/extension-bullet-list@2"
+import OrderedList from "https://esm.sh/@tiptap/extension-ordered-list@2"
+import ListItem from "https://esm.sh/@tiptap/extension-list-item@2"
+
+window.tiptap = { Editor, Extension: Editor.Extension }
+window.tiptapStarterKit = { StarterKit }
+window.tiptapUnderline = { Underline }
+window.tiptapTextAlign = { TextAlign }
+window.tiptapHighlight = { Highlight }
+window.tiptapTextStyle = { TextStyle }
+window.tiptapColor = { Color }
+window.tiptapFontFamily = { FontFamily }
+window.tiptapHeading = { Heading }
+window.tiptapBulletList = { BulletList }
+window.tiptapOrderedList = { OrderedList }
+window.tiptapListItem = { ListItem }
+
+/* your existing code */
 import { loadNav } from "./utilities/nav.js"
 import { loadApps } from "./utilities/apps.js"
 import { loadFooter } from "./utilities/footer.js"
 
-loadNav()
-loadApps()
-loadFooter()
+loadNav();
+loadApps();
+loadFooter();
 
 </script>
 
