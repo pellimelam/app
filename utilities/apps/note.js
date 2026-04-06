@@ -586,7 +586,7 @@ view.innerHTML = `
 
     <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().undo().run(); }">↶</button>
     <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().redo().run(); }">↷</button>
-    <button onclick="APP.insertPageBreak()">Page Break</button>
+  
   </div>
 
   <!-- EDITOR -->
