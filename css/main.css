@@ -80,9 +80,7 @@ word-break:break-word;
 }
 
 
-.editor-content {
-  max-width: 794px;
-}
+
 
 .editor-content > * {
   page-break-inside: avoid;
@@ -136,7 +134,25 @@ word-break:break-word;
   color: #999;
 }
 
+/* DESKTOP A4 */
+@media (min-width: 768px){
+  #pages > div,
+  .editor-content {
+    width: 794px;
+    margin: auto;
+  }
+}
 
+/* MOBILE FULL WIDTH */
+@media (max-width: 768px){
+  #pages > div,
+  .editor-content {
+    width: 100% !important;
+    padding: 16px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
 
 
 /* WRAPPER */
