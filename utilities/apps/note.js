@@ -563,7 +563,7 @@ view.innerHTML = `
     background:#020617;
     padding:8px;
     display:flex;
-    gap:6px;
+    gap:10px;
     flex-wrap:nowrap;
     overflow-x:auto;
     border-bottom:1px solid #1e293b;
@@ -614,7 +614,7 @@ view.innerHTML = `
   <!-- EDITOR -->
   <div style="
     width:100%;
-    background:#e5e7eb;
+    background:transparent;
     padding:0;
   ">
 
@@ -627,7 +627,6 @@ view.innerHTML = `
 
       <div id="editor" style="
         min-height:100vh;
-        padding:16px;
       ">
         <div style="padding:20px;">Loading editor...</div>
       </div>
@@ -715,9 +714,7 @@ if(APP.editor){
   content: page.content || "<p></p>",
 
   editorProps: {
-    attributes: {
-      class: "editor-content"
-    },
+    attributes: {}
   },
 
   onUpdate: (() => {
