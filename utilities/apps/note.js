@@ -590,7 +590,15 @@ view.innerHTML = `
   </div>
 
   <!-- EDITOR -->
-  <div id="editor" style="height:70vh;border-radius:12px;overflow:hidden;">
+  <div style="display:flex;justify-content:center;background:#e5e7eb;padding:20px;">
+    <div id="editor" style="
+      width:794px;
+      min-height:1123px;
+      background:white;
+      box-shadow:0 0 10px rgba(0,0,0,0.1);
+      border-radius:8px;
+      overflow:hidden;
+    ">
     <div style="padding:20px;">Loading editor...</div>
   </div>
 
@@ -638,6 +646,20 @@ if(APP.editor){
     window.tiptapTextStyle?.TextStyle,
     window.tiptapColor?.Color,
     window.tiptapFontFamily?.FontFamily,
+    window.tiptapTextStyle?.TextStyle.extend({
+      addAttributes() {
+        return {
+          fontSize: {
+            default: null,
+            parseHTML: element => element.style.fontSize,
+            renderHTML: attributes => {
+              if (!attributes.fontSize) return {};
+              return { style: `font-size:${attributes.fontSize}` };
+            },
+          },
+        };
+      },
+    }),
 
 
 
@@ -720,58 +742,55 @@ APP.exportNote = async function(id){
 
   const notes = await getNotes();
   const note = notes.find(n => n.id === id);
-  if(!note){
-    backToList();
-    return;
-  }
+  if(!note) return;
 
   const zip = new JSZip();
 
-  for(let i = 0; i < note.pages.length; i++){
+  for(let page of note.pages){
 
-    const page = note.pages[i];
-
-    const meta = getFileMeta(page.name || `Page_${i+1}`);
+    const meta = getFileMeta(page.name);
     const path = meta.fileName.split("/").filter(Boolean);
 
     let folder = zip;
-
-    for(let j = 0; j < path.length - 1; j++){
-      folder = folder.folder(path[j]);
+    for(let i = 0; i < path.length - 1; i++){
+      folder = folder.folder(path[i]);
     }
 
     const jsPDF = window.jspdf.jsPDF;
 
     const pdf = new jsPDF({
       unit: "px",
-      format: "a4"
+      format: [794, 1123]
     });
 
-    // 🔥 REAL DOM
     const temp = document.createElement("div");
-    temp.style.padding = "20px";
+    temp.style.position = "fixed";
+    temp.style.left = "-9999px";
+    temp.style.width = "794px";
     temp.style.background = "#fff";
+    temp.style.padding = "20px";
+
     temp.innerHTML = page.content || "<p></p>";
 
     document.body.appendChild(temp);
 
     await pdf.html(temp, {
-      x: 10,
-      y: 10,
-      html2canvas: { scale: 0.6 }
+      x: 0,
+      y: 0,
+      html2canvas: { scale: 1 }
     });
 
     document.body.removeChild(temp);
 
-    const pdfBlob = pdf.output("blob");
+    const blob = pdf.output("blob");
 
-    folder.file(path[path.length - 1], pdfBlob);
+    folder.file(path[path.length - 1], blob);
   }
 
-  const blob = await zip.generateAsync({ type: "blob" });
+  const zipBlob = await zip.generateAsync({ type: "blob" });
 
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(zipBlob);
   a.download = (note.title || "note") + ".zip";
   a.click();
 };
@@ -807,10 +826,7 @@ APP.downloadPage = async function(noteId, pageId){
 
   const notes = await getNotes();
   const note = notes.find(n => n.id === noteId);
-  if(!note){
-    backToList();
-    return;
-  }
+  if(!note) return;
 
   const page = note.pages.find(p => p.id === pageId);
   if(!page) return;
@@ -821,21 +837,28 @@ APP.downloadPage = async function(noteId, pageId){
 
   const pdf = new jsPDF({
     unit: "px",
-    format: "a4"
+    format: [794, 1123] // exact A4
   });
 
-  // 🔥 CREATE REAL DOM
+  // hidden container (NO FLASH)
   const temp = document.createElement("div");
-  temp.style.padding = "20px";
+  temp.style.position = "fixed";
+  temp.style.left = "-9999px";
+  temp.style.top = "0";
+  temp.style.width = "794px";
   temp.style.background = "#fff";
+  temp.style.padding = "20px";
+
   temp.innerHTML = page.content || "<p></p>";
 
   document.body.appendChild(temp);
 
   await pdf.html(temp, {
-    x: 10,
-    y: 10,
-    html2canvas: { scale: 0.6 }
+    x: 0,
+    y: 0,
+    html2canvas: {
+      scale: 1
+    }
   });
 
   document.body.removeChild(temp);
