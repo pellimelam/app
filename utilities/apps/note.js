@@ -558,7 +558,7 @@ view.innerHTML = `
   <!-- TOOLBAR -->
   <div style="
     position:sticky;
-    top:0;
+    top:60px;
     z-index:50;
     background:#020617;
     padding:8px;
@@ -683,12 +683,18 @@ if(APP.editor){
   element: document.querySelector("#editorInner"),
 
   extensions: [
+
     window.tiptapStarterKit.StarterKit,
+
+    window.tiptapPlaceholder?.Placeholder.configure({
+      placeholder: "Start typing here..."
+    }),
 
     window.tiptapUnderline?.Underline,
     window.tiptapHighlight?.Highlight,
     window.tiptapColor?.Color,
     window.tiptapFontFamily?.FontFamily,
+
     window.tiptapTextStyle?.TextStyle.extend({
       addAttributes() {
         return {
@@ -703,8 +709,6 @@ if(APP.editor){
         };
       },
     }),
-
-
 
     window.tiptapTextAlign?.TextAlign.configure({
       types: ['heading', 'paragraph'],
