@@ -706,15 +706,7 @@ APP.editor = new window.tiptap.Editor({
 
   editorProps: {
     attributes: {
-      style: `
-        height:100%;
-        padding:20px;
-        background:#ffffff;
-        color:#000;
-        font-size:16px;
-        line-height:1.6;
-        outline:none;
-      `,
+      class: "editor-content"
     },
   },
 
