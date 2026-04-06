@@ -28,8 +28,9 @@ function getFontSizeExtension(){
 
       addCommands() {
         return {
-          setFontSize: size => ({ chain }) =>
-            chain().setMark('textStyle', { fontSize: size }).run(); }
+          setFontSize: size => ({ chain }) => {
+            return chain().setMark('textStyle', { fontSize: size }).run();
+          }
         };
       }
     });
