@@ -558,7 +558,7 @@ view.innerHTML = `
   <!-- TOOLBAR -->
   <div style="
     position:sticky;
-    top:60px;
+    top:0;
     z-index:50;
     background:#020617;
     padding:8px;
@@ -673,6 +673,8 @@ if(APP.editor){
 
  element: document.querySelector("#editor"),
 
+ autofocus: true,
+
   extensions: [
 
     window.tiptapStarterKit.StarterKit,
@@ -707,7 +709,7 @@ if(APP.editor){
 
   ].filter(Boolean),
 
-  content: page.content || "<p></p>",
+  content: page.content && page.content.trim() !== "" ? page.content : "",
 
   editorProps: {
     attributes: {}
