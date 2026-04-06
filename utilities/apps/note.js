@@ -650,11 +650,7 @@ APP.insertPageBreak = function(){
 
 
   
-const editorDiv = document.getElementById("editor");
 
-editorDiv.innerHTML = `
-<div id="editorInner"></div>
-`;
 
 /* DESTROY OLD */
 if(APP.editor){
@@ -680,7 +676,7 @@ if(APP.editor){
 
   APP.editor = new window.tiptap.Editor({
 
-  element: document.querySelector("#editorInner"),
+ element: document.querySelector("#editor"),
 
   extensions: [
 
