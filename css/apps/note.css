@@ -49,14 +49,7 @@ NOTE APP – FINAL WORLD-CLASS EDITOR
   z-index: 1;
 }
 
-/* FORCE REMOVE ANY DEFAULT INPUT STYLES */
-.note-app .ProseMirror,
-.note-app .ProseMirror * {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  color: inherit !important;
-}
+
 
 /* PLACEHOLDER */
 .note-app .ProseMirror p.is-editor-empty:first-child::before {
