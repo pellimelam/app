@@ -591,18 +591,20 @@ view.innerHTML = `
 
   <!-- EDITOR -->
   <div style="display:flex;justify-content:center;background:#e5e7eb;padding:20px;">
-    <div id="editor" style="
+    <div style="
       width:794px;
-      min-height:1123px;
       background:white;
       box-shadow:0 0 10px rgba(0,0,0,0.1);
       border-radius:8px;
-      overflow:hidden;
     ">
-    <div style="padding:20px;">Loading editor...</div>
+      <div id="editor" style="
+        min-height:1123px;
+        padding:40px;
+      ">
+        <div style="padding:20px;">Loading editor...</div>
+      </div>
+    </div>
   </div>
-
-</div>
 
 `;
 
@@ -611,7 +613,13 @@ APP.insertPageBreak = function(){
   if(!APP.editor) return;
 
   APP.editor.commands.focus();
-  APP.editor.chain().insertContent('<div style="page-break-after:always;"></div>').run();
+
+  APP.editor.chain().insertContent(`
+    <div class="page-break">
+      <div class="page-break-line"></div>
+      <div class="page-break-text">Page Break</div>
+    </div>
+  `).run();
 };
 
 
@@ -749,6 +757,8 @@ openNote(noteId);
 
 
 APP.exportNote = async function(id){
+  if(APP.__exporting) return;
+  APP.__exporting = true;
 
   const notes = await getNotes();
   const note = notes.find(n => n.id === id);
@@ -777,7 +787,7 @@ APP.exportNote = async function(id){
     document.body.appendChild(temp);
 
     const canvas = await html2canvas(temp, {
-      scale: 2,
+      scale: 1,
       useCORS: true
     });
 
@@ -837,6 +847,7 @@ APP.exportNote = async function(id){
   a.href = URL.createObjectURL(zipBlob);
   a.download = (note.title || "note") + ".zip";
   a.click();
+  APP.__exporting = false;
 };
 
 
@@ -867,6 +878,8 @@ function getFileMeta(name){
 
 
 APP.downloadPage = async function(noteId, pageId){
+  if(APP.__downloading) return;
+  APP.__downloading = true;
 
   const notes = await getNotes();
   const note = notes.find(n => n.id === noteId);
@@ -889,7 +902,7 @@ APP.downloadPage = async function(noteId, pageId){
   document.body.appendChild(temp);
 
   const canvas = await html2canvas(temp, {
-    scale: 2,
+    scale: 1,
     useCORS: true
   });
 
@@ -940,6 +953,7 @@ APP.downloadPage = async function(noteId, pageId){
   }
 
   pdf.save(meta.fileName);
+  APP.__downloading = false;
 };
 
 
