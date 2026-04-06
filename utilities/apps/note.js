@@ -15,7 +15,7 @@ function loadNoteCSS(){
   const link = document.createElement("link");
   link.id = "note-css";
   link.rel = "stylesheet";
-  link.href = "./css/apps/note.css";
+  link.href = "/css/apps/note.css";
 
   document.head.appendChild(link);
 }
@@ -625,11 +625,7 @@ view.innerHTML = `
       background:white;
     ">
 
-      <div id="editor" style="
-        min-height:100vh;
-      ">
-        <div style="padding:20px;">Loading editor...</div>
-      </div>
+      <div id="editor" style="min-height:100vh;"></div>
     </div>
   </div>
 
