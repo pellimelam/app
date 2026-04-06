@@ -940,7 +940,7 @@ async function generateHighQualityPDF(htmlContent){
 
   const canvas = await html2canvas(temp, {
     scale: 4,   // 🔥 ULTRA HD
-    useCORS: true
+    useCORS: true,
     backgroundColor: "#ffffff" 
   });
 
