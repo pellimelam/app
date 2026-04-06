@@ -81,6 +81,37 @@ word-break:break-word;
 
 
 
+
+
+
+
+
+
+
+.page-break {
+  position: relative;
+  margin: 40px 0;
+  text-align: center;
+}
+
+.page-break-line {
+  border-top: 2px dashed #ccc;
+}
+
+.page-break-text {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  padding: 0 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+
+
+
 /* WRAPPER */
 
 .wrapper{
