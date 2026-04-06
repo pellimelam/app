@@ -333,31 +333,61 @@ document.getElementById("searchPages").addEventListener("input", ()=>{
 
 APP.changeFontSize = function(change){
 
-const selection = window.getSelection();
-if(!selection.rangeCount) return;
+let size = parseInt(document.getElementById("fontSizeInput").value || 14);
 
-const range = selection.getRangeAt(0);
+size += change;
 
-// get current size
-let currentSize = 14;
+if(size < 10) size = 10;
+if(size > 40) size = 40;
 
-if(range.startContainer.parentElement){
-  const el = range.startContainer.parentElement;
-  currentSize = parseInt(window.getComputedStyle(el).fontSize) || 14;
-}
+document.getElementById("fontSizeInput").value = size;
 
-let newSize = currentSize + change;
-
-if(newSize < 10) newSize = 10;
-if(newSize > 40) newSize = 40;
-
-// wrap selected text
-const span = document.createElement("span");
-span.style.fontSize = newSize + "px";
-
-range.surroundContents(span);
+applyFontSize(size);
 
 };
+
+
+
+function applyFontSize(size){
+
+document.execCommand("fontSize", false, "7");
+
+const fonts = document.getElementsByTagName("font");
+
+for(let i = 0; i < fonts.length; i++){
+  if(fonts[i].size === "7"){
+    fonts[i].removeAttribute("size");
+    fonts[i].style.fontSize = size + "px";
+  }
+}
+
+}
+
+
+window.applyFontSizeFromInput = function(){
+
+let size = parseInt(document.getElementById("fontSizeInput").value);
+
+if(size < 10) size = 10;
+if(size > 40) size = 40;
+
+applyFontSize(size);
+
+};
+
+
+
+
+
+window.applyColor = function(color){
+  document.execCommand("foreColor", false, color);
+};
+
+window.setAlign = function(type){
+  document.execCommand("justify" + type);
+};
+
+
 
 
 
@@ -560,55 +590,81 @@ view.innerHTML = `
     <strong>${page.name || "Untitled"}</strong>
   </div>
 
-  <div class="editor-toolbar">
+  <div class="editor-toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+
     <button onclick="formatText('bold')">B</button>
     <button onclick="formatText('italic')">I</button>
-    <button onclick="changeFontSize(2)">A+</button>
-    <button onclick="changeFontSize(-2)">A-</button>
+
+    <button onclick="changeFontSize(-1)">-</button>
+
+    <input id="fontSizeInput" type="number" value="14" min="10" max="40"
+      style="width:60px;text-align:center;"
+      onkeydown="if(event.key==='Enter'){ applyFontSizeFromInput(); }"
+    />
+
+    <button onclick="changeFontSize(1)">+</button>
+
+    <input type="color" onchange="applyColor(this.value)">
+
+    <button onclick="setAlign('left')">L</button>
+    <button onclick="setAlign('center')">C</button>
+    <button onclick="setAlign('right')">R</button>
+
   </div>
 
-  <div id="editor" style="height:70vh;border-radius:12px;overflow:hidden;"></div>
+    <div id="editor" style="height:70vh;border-radius:12px;overflow:hidden;"></div>
 
-</div>
+  </div>
 `;
 
 const editorDiv = document.getElementById("editor");
 
 editorDiv.innerHTML = `
-<div id="textEditor" contenteditable="true" spellcheck="true" style="
-  width:100%;
+<div id="docContainer" style="
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:20px;
+  padding:20px;
+  background:#f1f5f9;
   height:100%;
-  background:#ffffff;
-  color:#000000;
-  border:1px solid #ddd;
-  outline:none;
-  padding:12px;
-  font-size:14px;
-  line-height:1.4;
   overflow:auto;
-  white-space:pre-wrap;
-"></div>
+">
+
+  <div class="page" contenteditable="true" spellcheck="true" style="
+    width:794px;
+    min-height:1123px;
+    background:white;
+    padding:40px;
+    outline:none;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+    font-size:14px;
+    line-height:1.5;
+  "></div>
+
+</div>
 `;
 
-const editor = document.getElementById("textEditor");
+const container = document.getElementById("docContainer");
+const pageEl = container.querySelector(".page");
 
-// load content
-editor.innerText = page.content || "";
+pageEl.innerHTML = page.content || "";
 
-/* ✅ SAVE */
-editor.addEventListener("input", async ()=>{
-  page.content = editor.innerText;
+/* SAVE */
+pageEl.addEventListener("input", async ()=>{
+  page.content = container.innerHTML;
   await saveNote(note);
 });
 
-/* ✅ CLEAN PASTE (NO STYLE, NO COLOR) */
-editor.addEventListener("paste", (e)=>{
+/* CLEAN PASTE */
+pageEl.addEventListener("paste", (e)=>{
   e.preventDefault();
   const text = (e.clipboardData || window.clipboardData).getData("text");
   document.execCommand("insertText", false, text);
 });
 
-};
+/* AUTO PAGE BREAK */
+pageEl.addEventListener("input", autoPaginate);
 
 
 
@@ -711,7 +767,7 @@ APP.exportNote = async function(id){
       folder = folder.folder(path[j]);
     }
 
-    const jsPDF = window.jspdf && window.jspdf.jsPDF;
+    const jsPDF = window.jspdf.jsPDF;
 
     if(!jsPDF){
       alert("PDF failed. Reload page once.");
@@ -814,7 +870,7 @@ APP.downloadPage = async function(noteId, pageId){
   /* ✅ SINGLE FILE */
   if(path.length === 1){
 
-    const jsPDF = window.jspdf && window.jspdf.jsPDF;
+    const jsPDF = window.jspdf.jsPDF;
 
     if(!jsPDF){
       alert("PDF failed. Reload page once.");
@@ -839,7 +895,7 @@ APP.downloadPage = async function(noteId, pageId){
     folder = folder.folder(path[i]);
   }
 
-  const jsPDF = window.jspdf && window.jspdf.jsPDF;
+  const jsPDF = window.jspdf.jsPDF;
 
   if(!jsPDF){
     alert("PDF failed. Reload page once.");
@@ -919,3 +975,33 @@ window.goBack = function(){
   // home → main apps
   window.location.href = "/app";
 };
+
+
+
+
+
+function autoPaginate(){
+
+const container = document.getElementById("docContainer");
+const pages = container.querySelectorAll(".page");
+
+pages.forEach(page => {
+
+  if(page.scrollHeight > page.clientHeight){
+
+    const newPage = document.createElement("div");
+
+    newPage.className = "page";
+    newPage.contentEditable = "true";
+    newPage.spellcheck = true;
+    newPage.style.cssText = page.style.cssText;
+
+    newPage.innerHTML = page.innerHTML;
+    page.innerHTML = "";
+
+    page.after(newPage);
+  }
+
+});
+
+}
