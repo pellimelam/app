@@ -590,19 +590,20 @@ view.innerHTML = `
   </div>
 
   <!-- EDITOR -->
-  <div style="background:#e5e7eb;padding:30px;">
-  
-    <!-- HIDDEN REAL EDITOR -->
-    <div id="editor" style="display:none;"></div>
-
-    <!-- VISIBLE PAGES -->
-    <div id="pages" style="
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:20px;
-    "></div>
-
+  <div style="display:flex;justify-content:center;background:#e5e7eb;padding:20px;">
+    <div style="
+      width:794px;
+      background:white;
+      box-shadow:0 0 10px rgba(0,0,0,0.1);
+      border-radius:8px;
+    ">
+      <div id="editor" style="
+        min-height:1123px;
+        padding:40px;
+      ">
+        <div style="padding:20px;">Loading editor...</div>
+      </div>
+    </div>
   </div>
 
 `;
@@ -613,13 +614,19 @@ APP.insertPageBreak = function(){
 
   APP.editor.commands.focus();
 
-  APP.editor.chain().focus().setHorizontalRule().run();
+  APP.editor.chain().insertContent(`
+    <div class="a4-page-break"></div>
+  `).run();
 };
 
 
 
   
+const editorDiv = document.getElementById("editor");
 
+editorDiv.innerHTML = `
+<div id="editorInner"></div>
+`;
 
 /* DESTROY OLD */
 if(APP.editor){
@@ -643,10 +650,9 @@ if(APP.editor){
     return;
   }
 
+  APP.editor = new window.tiptap.Editor({
 
-APP.editor = new window.tiptap.Editor({
-
-  element: document.getElementById("editor"),
+  element: document.querySelector("#editorInner"),
 
   extensions: [
     window.tiptapStarterKit.StarterKit,
@@ -670,6 +676,8 @@ APP.editor = new window.tiptap.Editor({
       },
     }),
 
+
+
     window.tiptapTextAlign?.TextAlign.configure({
       types: ['heading', 'paragraph'],
     }),
@@ -684,18 +692,12 @@ APP.editor = new window.tiptap.Editor({
     },
   },
 
-  onCreate: () => {
-    setTimeout(renderPages, 50); // ✅ ADD THIS
-  },
-
   onUpdate: (() => {
     let saveTimer;
 
     return ({ editor }) => {
 
       clearTimeout(saveTimer);
-      clearTimeout(window.__renderTimer);
-      window.__renderTimer = setTimeout(renderPages, 150);
 
       saveTimer = setTimeout(async () => {
         try {
@@ -722,69 +724,6 @@ APP.editor = new window.tiptap.Editor({
 
 })();
 };
-
-
-
-
-
-function renderPages(){
-  if(!APP.editor || !APP.editor.getHTML) return;
-
-  const container = document.getElementById("pages");
-  if(!container || !APP.editor) return;
-
-  container.innerHTML = "";
-
-  const html = APP.editor.getHTML();
-
-  const temp = document.createElement("div");
-  temp.style.width = window.innerWidth < 768 ? "100%" : "794px";
-  temp.style.padding = window.innerWidth < 768 ? "16px" : "40px";
-  temp.innerHTML = html;
-
-  const pageHeight = window.innerWidth < 768 ? 1000 : 1123;
-
-  let page = createPage();
-  container.appendChild(page);
-
-  Array.from(temp.childNodes).forEach(node => {
-
-    const clone = node.cloneNode(true);
-    page.appendChild(clone);
-
-    if(page.scrollHeight > pageHeight){
-
-      page.removeChild(clone);
-
-      page = createPage();
-      container.appendChild(page);
-
-      page.appendChild(clone);
-    }
-
-  });
-}
-
-function createPage(){
-  const div = document.createElement("div");
-
-  const isMobile = window.innerWidth < 768;
-
-  div.style.width = isMobile ? "100%" : "794px";
-  div.style.height = isMobile ? "1000px" : "1123px"; // ✅ FIXED
-  div.style.background = "#fff";
-  div.style.padding = isMobile ? "16px" : "40px";
-  div.style.boxShadow = isMobile ? "none" : "0 0 10px rgba(0,0,0,0.1)";
-  div.style.borderRadius = isMobile ? "0" : "8px";
-  div.style.overflow = "hidden";
-
-  return div;
-}
-
-
-
-
-
 
 
 
@@ -1067,4 +1006,3 @@ window.goBack = function(){
   // home → main apps
   window.location.href = "/app";
 };
-
