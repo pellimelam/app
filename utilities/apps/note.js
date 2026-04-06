@@ -586,7 +586,7 @@ view.innerHTML = `
 
     <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().undo().run(); }">↶</button>
     <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().redo().run(); }">↷</button>
-
+    <button onclick="APP.insertPageBreak()">Page Break</button>
   </div>
 
   <!-- EDITOR -->
@@ -606,6 +606,17 @@ view.innerHTML = `
 
 `;
 
+
+APP.insertPageBreak = function(){
+  if(!APP.editor) return;
+
+  APP.editor.commands.focus();
+  APP.editor.chain().insertContent('<div style="page-break-after:always;"></div>').run();
+};
+
+
+
+  
 const editorDiv = document.getElementById("editor");
 
 editorDiv.innerHTML = `
@@ -755,13 +766,6 @@ APP.exportNote = async function(id){
       folder = folder.folder(path[i]);
     }
 
-    const jsPDF = window.jspdf.jsPDF;
-
-    const pdf = new jsPDF({
-      unit: "px",
-      format: [794, 1123]
-    });
-
     const temp = document.createElement("div");
     temp.style.position = "fixed";
     temp.style.left = "-9999px";
@@ -770,19 +774,60 @@ APP.exportNote = async function(id){
     temp.style.padding = "20px";
 
     temp.innerHTML = page.content || "<p></p>";
-
     document.body.appendChild(temp);
 
-    await pdf.html(temp, {
-      x: 0,
-      y: 0,
-      html2canvas: { scale: 1 }
+    const canvas = await html2canvas(temp, {
+      scale: 2,
+      useCORS: true
     });
 
     document.body.removeChild(temp);
 
-    const blob = pdf.output("blob");
+    const imgWidth = 794;
+    const pageHeight = 1123;
 
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+
+    const jsPDF = window.jspdf.jsPDF;
+    const pdf = new jsPDF({
+      unit: "px",
+      format: [imgWidth, pageHeight]
+    });
+
+    let position = 0;
+
+    while(position < imgHeight){
+
+      const pageCanvas = document.createElement("canvas");
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = pageHeight * canvas.width / imgWidth;
+
+      const ctx = pageCanvas.getContext("2d");
+
+      ctx.drawImage(
+        canvas,
+        0,
+        position * canvas.width / imgWidth,
+        canvas.width,
+        pageCanvas.height,
+        0,
+        0,
+        canvas.width,
+        pageCanvas.height
+      );
+
+      const imgData = pageCanvas.toDataURL("image/png");
+
+      if(position > 0){
+        pdf.addPage();
+      }
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, pageHeight);
+
+      position += pageHeight;
+    }
+
+    const blob = pdf.output("blob");
     folder.file(path[path.length - 1], blob);
   }
 
@@ -832,14 +877,6 @@ APP.downloadPage = async function(noteId, pageId){
 
   const meta = getFileMeta(page.name);
 
-  const jsPDF = window.jspdf.jsPDF;
-
-  const pdf = new jsPDF({
-    unit: "px",
-    format: [794, 1123] // exact A4
-  });
-
-  // hidden container (NO FLASH)
   const temp = document.createElement("div");
   temp.style.position = "fixed";
   temp.style.left = "-9999px";
@@ -849,18 +886,58 @@ APP.downloadPage = async function(noteId, pageId){
   temp.style.padding = "20px";
 
   temp.innerHTML = page.content || "<p></p>";
-
   document.body.appendChild(temp);
 
-  await pdf.html(temp, {
-    x: 0,
-    y: 0,
-    html2canvas: {
-      scale: 1
-    }
+  const canvas = await html2canvas(temp, {
+    scale: 2,
+    useCORS: true
   });
 
   document.body.removeChild(temp);
+
+  const imgWidth = 794;
+  const pageHeight = 1123;
+
+  const imgHeight = canvas.height * imgWidth / canvas.width;
+
+  const jsPDF = window.jspdf.jsPDF;
+  const pdf = new jsPDF({
+    unit: "px",
+    format: [imgWidth, pageHeight]
+  });
+
+  let position = 0;
+
+  while(position < imgHeight){
+
+    const pageCanvas = document.createElement("canvas");
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = pageHeight * canvas.width / imgWidth;
+
+    const ctx = pageCanvas.getContext("2d");
+
+    ctx.drawImage(
+      canvas,
+      0,
+      position * canvas.width / imgWidth,
+      canvas.width,
+      pageCanvas.height,
+      0,
+      0,
+      canvas.width,
+      pageCanvas.height
+    );
+
+    const imgData = pageCanvas.toDataURL("image/png");
+
+    if(position > 0){
+      pdf.addPage();
+    }
+
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, pageHeight);
+
+    position += pageHeight;
+  }
 
   pdf.save(meta.fileName);
 };
