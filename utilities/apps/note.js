@@ -653,13 +653,22 @@ if(APP.editor){
 }
 
 /* INIT NEW */
-if(!window.tiptap || !window.tiptap.Editor){
-  console.error("TipTap NOT LOADED", window.tiptap);
-  alert("Editor failed to load. Reload page.");
-  return;
-}
+(async () => {
 
-APP.editor = new window.tiptap.Editor({
+  let tries = 0;
+
+  while((!window.tiptap || !window.tiptap.Editor) && tries < 50){
+    await new Promise(r => setTimeout(r, 50));
+    tries++;
+  }
+
+  if(!window.tiptap || !window.tiptap.Editor){
+    alert("Editor failed to load. Refresh page.");
+    console.error("TipTap NOT LOADED");
+    return;
+  }
+
+  APP.editor = new window.tiptap.Editor({
 
   element: document.querySelector("#editorInner"),
 
@@ -725,6 +734,7 @@ APP.editor = new window.tiptap.Editor({
 
 });
 
+})();
 };
 
 
