@@ -342,7 +342,11 @@ if(size > 40) size = 40;
 
 document.getElementById("fontSizeInput").value = size;
 
+// apply to selection
 applyFontSize(size);
+
+// ALSO set typing mode
+setTypingFontSize(size);
 
 };
 
@@ -350,9 +354,13 @@ applyFontSize(size);
 
 function applyFontSize(size){
 
+const editor = document.querySelector(".page");
+editor.focus();
+
+// apply to selection
 document.execCommand("fontSize", false, "7");
 
-const fonts = document.getElementsByTagName("font");
+const fonts = editor.getElementsByTagName("font");
 
 for(let i = 0; i < fonts.length; i++){
   if(fonts[i].size === "7"){
@@ -361,6 +369,12 @@ for(let i = 0; i < fonts.length; i++){
   }
 }
 
+}
+
+let currentFontSize = 14;
+
+function setTypingFontSize(size){
+  currentFontSize = size;
 }
 
 
@@ -380,6 +394,7 @@ applyFontSize(size);
 
 
 window.applyColor = function(color){
+  document.execCommand("styleWithCSS", false, true);
   document.execCommand("foreColor", false, color);
 };
 
@@ -648,12 +663,32 @@ editorDiv.innerHTML = `
 const container = document.getElementById("docContainer");
 const pageEl = container.querySelector(".page");
 
-pageEl.innerHTML = page.content || "";
+pageEl.innerHTML = page.content || "<p><br></p>";
+
+// force cursor inside editor
+setTimeout(()=>{
+  pageEl.focus();
+  document.execCommand("defaultParagraphSeparator", false, "p");
+}, 0);
 
 /* SAVE */
 pageEl.addEventListener("input", async ()=>{
-  page.content = container.innerHTML;
-  await saveNote(note);
+
+// apply current typing font
+document.execCommand("fontSize", false, "7");
+
+const fonts = pageEl.getElementsByTagName("font");
+
+for(let i = 0; i < fonts.length; i++){
+  if(fonts[i].size === "7"){
+    fonts[i].removeAttribute("size");
+    fonts[i].style.fontSize = currentFontSize + "px";
+  }
+}
+
+page.content = container.innerHTML;
+await saveNote(note);
+
 });
 
 /* CLEAN PASTE */
@@ -696,8 +731,10 @@ openNote(noteId);
 
 APP.formatText = function(type){
 
-const editor = document.getElementById("textEditor");
+const editor = document.querySelector(".page");
 editor.focus();
+
+document.execCommand("styleWithCSS", false, true);
 
 if(type === "bold"){
   document.execCommand("bold");
