@@ -1,3 +1,6 @@
+console.log("TipTap check:", window.tiptap);
+
+
 function getFontSizeExtension(){
   try {
     if(!window.tiptap || !window.tiptap.Extension){
