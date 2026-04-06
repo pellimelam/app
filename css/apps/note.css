@@ -20,6 +20,18 @@ NOTE APP – FINAL WORLD-CLASS EDITOR
 
 
 
+.note-app .ProseMirror:focus {
+  outline: none;
+  caret-color: #2563eb;
+}
+
+
+.note-app .ProseMirror p {
+  margin: 0;
+}
+
+
+
 /* FOCUS EFFECT */
 .note-app #editor:focus-within {
   box-shadow: 0 6px 25px rgba(37,99,235,0.15);
