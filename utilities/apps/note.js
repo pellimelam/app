@@ -29,7 +29,7 @@ function getFontSizeExtension(){
       addCommands() {
         return {
           setFontSize: size => ({ chain }) =>
-            chain().setMark('textStyle', { fontSize: size }).run()
+            chain().setMark('textStyle', { fontSize: size }).run(); }
         };
       }
     });
@@ -592,24 +592,24 @@ view.innerHTML = `
   <!-- TOOLBAR -->
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
 
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleBold().run()">B</button>
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleItalic().run()">I</button>
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleUnderline().run()">U</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleBold().run(); }">B</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleItalic().run(); }">I</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleUnderline().run(); }">U</button>
 
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleHeading({ level: 1 }).run()">H1</button>
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleHeading({ level: 2 }).run()">H2</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleHeading({ level: 1 }).run(); }">H1</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleHeading({ level: 2 }).run(); }">H2</button>
 
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleBulletList().run()">•</button>
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleOrderedList().run()">1.</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleBulletList().run(); }">•</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleOrderedList().run(); }">1.</button>
 
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().setTextAlign('left').run()">L</button>
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().setTextAlign('center').run()">C</button>
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().setTextAlign('right').run()">R</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().setTextAlign('left').run(); }">L</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().setTextAlign('center').run(); }">C</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().setTextAlign('right').run(); }">R</button>
 
     <input type="color"
-      onchange="if(APP.editor) APP.editor.chain().focus().setColor(this.value).run()" />
+      onchange="if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().setColor(this.value).run(); }" />
 
-    <select onchange="if(APP.editor) APP.editor.chain().focus().setFontFamily(this.value).run()">
+    <select onchange="if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().setFontFamily(this.value).run(); }">
       <option value="">Font</option>
       <option value="Arial">Arial</option>
       <option value="Times New Roman">Times</option>
@@ -617,7 +617,7 @@ view.innerHTML = `
       <option value="Verdana">Verdana</option>
     </select>
 
-    <select onchange="if(APP.editor) APP.editor.chain().focus().setFontSize(this.value).run()">
+    <select onchange="if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().setFontSize(this.value).run(); }">
       <option value="">Size</option>
       <option value="12px">12</option>
       <option value="14px">14</option>
@@ -627,10 +627,10 @@ view.innerHTML = `
       <option value="32px">32</option>
     </select>
 
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().toggleHighlight().run()">🖍</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().toggleHighlight().run(); }">🖍</button>
 
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().undo().run()">↶</button>
-    <button onclick="event.preventDefault(); if(APP.editor) APP.editor.chain().focus().redo().run()">↷</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().undo().run(); }">↶</button>
+    <button onclick="event.preventDefault(); if(APP.editor){ APP.editor.commands.focus(); APP.editor.chain().redo().run(); }">↷</button>
 
   </div>
 
@@ -1034,7 +1034,6 @@ window.goBack = function(){
   // home → main apps
   window.location.href = "/app";
 };
-
 
 
 
