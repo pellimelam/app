@@ -924,15 +924,41 @@ window.goBack = function(){
 
 
 
-async function generateHighQualityPDF(){
+async function generateHighQualityPDF(htmlContent){
 
-  const editorEl = document.querySelector("#editorWrapper");
+  let targetEl = document.querySelector("#editorWrapper");
 
-  const canvas = await html2canvas(editorEl, {
+  /* ✅ IF EDITOR NOT PRESENT (EXPORT CASE) */
+  if(!targetEl){
+
+    targetEl = document.createElement("div");
+
+    targetEl.style.width = "794px";
+    targetEl.style.padding = "24px";
+    targetEl.style.boxSizing = "border-box";
+    targetEl.style.background = "#ffffff";
+    targetEl.style.fontFamily = "Segoe UI, Arial";
+    targetEl.style.fontSize = "16px";
+    targetEl.style.lineHeight = "1.7";
+
+    targetEl.innerHTML = htmlContent || "<p></p>";
+
+    targetEl.style.position = "fixed";
+    targetEl.style.left = "-9999px";
+
+    document.body.appendChild(targetEl);
+  }
+
+  const canvas = await html2canvas(targetEl, {
     scale: 2,
     backgroundColor: "#ffffff",
     useCORS: true
   });
+
+  /* REMOVE TEMP */
+  if(targetEl && targetEl.style.left === "-9999px"){
+    document.body.removeChild(targetEl);
+  }
 
   const jsPDF = window.jspdf.jsPDF;
 
@@ -942,13 +968,11 @@ async function generateHighQualityPDF(){
   });
 
   const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
 
   /* 🔥 SAME AS EDITOR GUIDE */
   const A4_HEIGHT = 1123;
 
   const scale = pageWidth / canvas.width;
-
   const scaledPageHeight = A4_HEIGHT * scale;
 
   let y = 0;
@@ -968,7 +992,7 @@ async function generateHighQualityPDF(){
       canvas.height * scale
     );
 
-    y += scaledPageHeight;  // 🔥 EXACT MATCH WITH EDITOR
+    y += scaledPageHeight;
   }
 
   return pdf.output("blob");
