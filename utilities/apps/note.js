@@ -926,35 +926,6 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
-  const temp = document.createElement("div");
-
-  /* EXACT CLONE OF EDITOR */
-  temp.style.position = "fixed";
-  temp.style.left = "-9999px";
-  temp.style.top = "0";
-
-  temp.style.width = "794px";
-  temp.style.padding = "24px";
-  temp.style.boxSizing = "border-box";
-
-  temp.style.background = "#ffffff";
-  temp.style.fontFamily = "Segoe UI, Arial";
-  temp.style.fontSize = "16px";
-  temp.style.lineHeight = "1.7";
-  temp.style.color = "#111";
-
-  temp.innerHTML = htmlContent || "<p></p>";
-  document.body.appendChild(temp);
-
-  /* RENDER FULL CANVAS */
-  const canvas = await html2canvas(temp, {
-    scale: 2,
-    backgroundColor: "#ffffff",
-    useCORS: true
-  });
-
-  document.body.removeChild(temp);
-
   const jsPDF = window.jspdf.jsPDF;
 
   const pdf = new jsPDF({
@@ -965,35 +936,84 @@ async function generateHighQualityPDF(htmlContent){
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
 
-  /* 🔥 SAFE MARGINS */
   const margin = 24;
 
-  const usableWidth = pageWidth - (margin * 2);
+  /* CREATE HIDDEN RENDER ROOT */
+  const root = document.createElement("div");
+  root.style.position = "fixed";
+  root.style.left = "-9999px";
+  root.style.top = "0";
+  root.style.width = "794px";
+  root.style.padding = "24px";
+  root.style.boxSizing = "border-box";
+  root.style.background = "#fff";
 
-  /* SCALE PERFECTLY */
-  const scale = usableWidth / canvas.width;
+  root.innerHTML = htmlContent || "<p></p>";
+  document.body.appendChild(root);
 
-  const scaledHeight = canvas.height * scale;
+  /* CREATE PAGE WRAPPER */
+  const page = document.createElement("div");
+  page.style.width = "794px";
+  page.style.height = "1123px";
+  page.style.padding = "24px";
+  page.style.boxSizing = "border-box";
+  page.style.background = "#fff";
 
-  let y = 0;
+  document.body.appendChild(page);
 
-  while(y < scaledHeight){
+  const nodes = Array.from(root.childNodes);
 
-    if(y > 0){
+  let currentHeight = 0;
+
+  for(let node of nodes){
+
+    const clone = node.cloneNode(true);
+    page.appendChild(clone);
+
+    const h = page.scrollHeight;
+
+    if(h > 1123){
+
+      page.removeChild(clone);
+
+      const canvas = await html2canvas(page, {
+        scale: 2,
+        backgroundColor: "#ffffff"
+      });
+
+      const img = canvas.toDataURL("image/jpeg", 1.0);
+
+      if(pdf.getNumberOfPages() > 0){
+        pdf.addPage();
+      }
+
+      pdf.addImage(img, "JPEG", 0, 0, pageWidth, pageHeight);
+
+      page.innerHTML = "";
+      page.appendChild(clone);
+    }
+
+  }
+
+  /* LAST PAGE */
+  if(page.innerHTML.trim() !== ""){
+
+    const canvas = await html2canvas(page, {
+      scale: 2,
+      backgroundColor: "#ffffff"
+    });
+
+    const img = canvas.toDataURL("image/jpeg", 1.0);
+
+    if(pdf.getNumberOfPages() > 0){
       pdf.addPage();
     }
 
-    pdf.addImage(
-      canvas.toDataURL("image/jpeg", 1.0),
-      "JPEG",
-      margin,
-      margin - y,
-      usableWidth,
-      scaledHeight
-    );
-
-    y += (pageHeight - (margin * 2));
+    pdf.addImage(img, "JPEG", 0, 0, pageWidth, pageHeight);
   }
+
+  document.body.removeChild(root);
+  document.body.removeChild(page);
 
   return pdf.output("blob");
 }
