@@ -927,80 +927,44 @@ window.goBack = function(){
 async function generateHighQualityPDF(htmlContent){
 
   const temp = document.createElement("div");
+
   temp.style.position = "fixed";
   temp.style.left = "-9999px";
   temp.style.top = "0";
+
+  /* ✅ MATCH EDITOR EXACTLY */
   temp.style.width = "794px";
   temp.style.background = "#ffffff";
-  temp.style.padding = "40px";
+  temp.style.padding = "24px";
   temp.style.fontFamily = "Segoe UI, Arial";
+  temp.style.lineHeight = "1.7";
+  temp.style.fontSize = "16px";
 
   temp.innerHTML = htmlContent || "<p></p>";
   document.body.appendChild(temp);
 
   const canvas = await html2canvas(temp, {
-    scale: 3, // 🔥 stable + high quality
-    useCORS: true,
-    backgroundColor: "#ffffff"
+    scale: 2,
+    backgroundColor: "#ffffff",
+    useCORS: true
   });
 
   document.body.removeChild(temp);
 
-  const imgWidth = 794;
-  const pageHeight = 1123;
-
-  const imgHeight = canvas.height * imgWidth / canvas.width;
+  const imgWidth = canvas.width;
+  const imgHeight = canvas.height;
 
   const jsPDF = window.jspdf.jsPDF;
+
+  /* ✅ SINGLE PAGE = FULL CONTENT */
   const pdf = new jsPDF({
     unit: "px",
-    format: [imgWidth, pageHeight]
+    format: [imgWidth, imgHeight]
   });
 
-  let position = 0;
+  const imgData = canvas.toDataURL("image/jpeg", 1.0);
 
-  while(position < imgHeight){
-
-    const pageCanvas = document.createElement("canvas");
-    pageCanvas.width = canvas.width;
-    pageCanvas.height = pageHeight * canvas.width / imgWidth;
-
-    const ctx = pageCanvas.getContext("2d");
-
-    // ✅ ALWAYS WHITE BACKGROUND (fixes black issue)
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-
-    const sourceY = position * canvas.width / imgWidth;
-    const remainingHeight = canvas.height - sourceY;
-
-    const drawHeight = Math.min(
-      pageCanvas.height,
-      remainingHeight
-    );
-
-    ctx.drawImage(
-      canvas,
-      0,
-      sourceY,
-      canvas.width,
-      drawHeight,
-      0,
-      0,
-      canvas.width,
-      drawHeight
-    );
-
-    const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
-
-    if(position > 0){
-      pdf.addPage();
-    }
-
-    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
-
-    position += pageHeight;
-  }
+  pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, imgHeight);
 
   return pdf.output("blob");
 }
