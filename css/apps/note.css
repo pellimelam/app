@@ -1,185 +1,69 @@
 /* =========================
-NOTE APP – FINAL WORLD-CLASS EDITOR
-========================= */
-
-/* MAIN EDITOR CONTAINER */
-.note-app #editor {
-  width: 100%;
-  max-width: 794px;
-  margin: auto;
-
-  background: #ffffff;
-  border-radius: 12px;
-
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  transition: box-shadow 0.2s ease;
-
-  position: relative;
-  overflow: visible;
-}
-
-
-
-.note-app .ProseMirror:focus {
-  outline: none;
-  caret-color: #2563eb;
-}
-
-
-.note-app .ProseMirror p {
-  margin: 0;
-}
-
-
-
-/* FOCUS EFFECT */
-.note-app #editor:focus-within {
-  box-shadow: 0 6px 25px rgba(37,99,235,0.15);
-}
-
-/* PROSEMIRROR ROOT */
-.note-app .ProseMirror {
-  min-height: 300px;
-
-  padding: 40px; /* 🔥 correct padding placement */
-
-  color: #111827;
-  font-size: 16px;
-  line-height: 1.7;
-  font-family: 'Segoe UI', Arial, sans-serif;
-
-  white-space: pre-wrap;
-  word-break: break-word;
-
-  caret-color: #2563eb;
-
-  outline: none !important;
-  border: none !important;
-  box-shadow: none !important;
-
-  position: relative;
-  z-index: 1;
-}
-
-
-
-/* PLACEHOLDER */
-.note-app .ProseMirror p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  color: #9ca3af;
-  pointer-events: none;
-  float: left;
-  height: 0;
-}
-
-/* PAGE BREAK VISUAL */
-.note-app .a4-page-break {
-  height: 40px;
-  margin: 40px 0;
-  border-top: 2px dashed #bbb;
-  position: relative;
-}
-
-.note-app .a4-page-break::after {
-  content: "Page Break";
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  padding: 0 10px;
-  font-size: 12px;
-  color: #888;
-}
-
-/* =========================
-MOBILE – PERFECT UX
-========================= */
-
-@media (max-width:768px){
-
-  .note-app #editor {
-    max-width: 100%;
-    border-radius: 0;
-  }
-
-  .note-app .ProseMirror {
-    padding: 16px;
-    font-size: 17px;
-    line-height: 1.8;
-  }
-
-}
-
-/* =========================
-SCROLL FIX
+A4 SYSTEM — FINAL
 ========================= */
 
 .note-app {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-/* =========================
-TOUCH OPTIMIZATION
-========================= */
-
-.note-app button {
-  touch-action: manipulation;
-}
-
-/* =========================
-TEXT SELECTION UX
-========================= */
-
-.note-app ::selection {
-  background: rgba(37, 99, 235, 0.25);
-}
-
-
-/* =========================
-REAL A4 PAGE SYSTEM
-========================= */
-
-#editorWrapper{
   background: #e5e7eb;
+}
+
+/* CENTER WRAPPER */
+#editorWrapper{
+  display: flex;
+  justify-content: center;
   padding: 40px 0;
 }
 
-/* each page */
+/* A4 PAGE */
 .note-app .ProseMirror{
   width: 794px;
   min-height: 1123px;
-
-  margin: 0 auto 30px auto;
 
   padding: 40px;
   box-sizing: border-box;
 
   background: #ffffff;
 
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #111827;
+
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 
-  position: relative;
+  outline: none;
 }
 
-/* page break indicator */
+/* PAGE BREAK (REAL CONTROL) */
 .note-app .a4-page-break{
   height: 0;
   border-top: 2px dashed #bbb;
   margin: 40px 0;
-  position: relative;
 }
 
-.note-app .a4-page-break::after{
-  content: "Page Break";
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  padding: 0 10px;
-  font-size: 12px;
-  color: #888;
+/* =========================
+PRINT (EXACT MATCH)
+========================= */
+
+@media print {
+
+  body {
+    background: white !important;
+  }
+
+  #editorWrapper{
+    padding: 0 !important;
+  }
+
+  .note-app .ProseMirror{
+    width: 794px !important;
+    min-height: 1123px !important;
+
+    margin: 0 !important;
+    box-shadow: none !important;
+
+    page-break-after: always;
+  }
 }
