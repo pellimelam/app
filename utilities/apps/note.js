@@ -618,8 +618,14 @@ view.innerHTML = `
     padding:0;
   ">
 
-    <div id="editorWrapper">
-      <div id="editor"></div>
+    <div id="editorWrapper" style="
+      width:100%;
+      max-width:794px;
+      margin:auto;
+      background:white;
+    ">
+
+      <div id="editor" style="min-height:100vh;"></div>
     </div>
   </div>
 
@@ -638,21 +644,6 @@ APP.insertPageBreak = function(){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
   
 
 
@@ -730,8 +721,6 @@ if(APP.editor){
     return ({ editor }) => {
 
       clearTimeout(saveTimer);
-
-    
 
       saveTimer = setTimeout(async () => {
         try {
@@ -937,46 +926,81 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
-  const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.left = "-9999px";
+  const temp = document.createElement("div");
+  temp.style.position = "fixed";
+  temp.style.left = "-9999px";
+  temp.style.top = "0";
+  temp.style.width = "794px";
+  temp.style.background = "#ffffff";
+  temp.style.padding = "40px";
+  temp.style.fontFamily = "Segoe UI, Arial";
 
-  container.innerHTML = htmlContent;
-  document.body.appendChild(container);
+  temp.innerHTML = htmlContent || "<p></p>";
+  document.body.appendChild(temp);
 
-  const pages = container.querySelectorAll(".a4-page");
-
-  const pdf = new window.jspdf.jsPDF({
-    unit: "px",
-    format: [794, 1123]
+  const canvas = await html2canvas(temp, {
+    scale: 3, // 🔥 stable + high quality
+    useCORS: true,
+    backgroundColor: "#ffffff"
   });
 
-  let first = true;
+  document.body.removeChild(temp);
 
-  for(let page of pages){
+  const imgWidth = 794;
+  const pageHeight = 1123;
 
-    const canvas = await html2canvas(page, {
-      scale: 2,
-      backgroundColor: "#ffffff"
-    });
+  const imgHeight = canvas.height * imgWidth / canvas.width;
 
-    if(!first){
+  const jsPDF = window.jspdf.jsPDF;
+  const pdf = new jsPDF({
+    unit: "px",
+    format: [imgWidth, pageHeight]
+  });
+
+  let position = 0;
+
+  while(position < imgHeight){
+
+    const pageCanvas = document.createElement("canvas");
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = pageHeight * canvas.width / imgWidth;
+
+    const ctx = pageCanvas.getContext("2d");
+
+    // ✅ ALWAYS WHITE BACKGROUND (fixes black issue)
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+
+    const sourceY = position * canvas.width / imgWidth;
+    const remainingHeight = canvas.height - sourceY;
+
+    const drawHeight = Math.min(
+      pageCanvas.height,
+      remainingHeight
+    );
+
+    ctx.drawImage(
+      canvas,
+      0,
+      sourceY,
+      canvas.width,
+      drawHeight,
+      0,
+      0,
+      canvas.width,
+      drawHeight
+    );
+
+    const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
+
+    if(position > 0){
       pdf.addPage();
     }
 
-    pdf.addImage(
-      canvas.toDataURL("image/jpeg", 1.0),
-      "JPEG",
-      0,
-      0,
-      794,
-      1123
-    );
+    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
 
-    first = false;
+    position += pageHeight;
   }
-
-  document.body.removeChild(container);
 
   return pdf.output("blob");
 }
