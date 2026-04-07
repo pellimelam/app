@@ -926,41 +926,6 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
-  /* ALWAYS CREATE SAFE RENDER ELEMENT */
-  const temp = document.createElement("div");
-
-  temp.style.width = "794px";
-  temp.style.padding = "24px";
-  temp.style.boxSizing = "border-box";
-  temp.style.background = "#ffffff";
-  temp.style.fontFamily = "Segoe UI, Arial";
-  temp.style.fontSize = "16px";
-  temp.style.lineHeight = "1.7";
-
-  temp.style.position = "fixed";
-  temp.style.left = "-9999px";
-  temp.style.top = "0";
-
-  temp.innerHTML = htmlContent || "<p></p>";
-
-  document.body.appendChild(temp);
-
-  let canvas;
-
-  try{
-    canvas = await html2canvas(temp, {
-      scale: 2,
-      backgroundColor: "#ffffff",
-      useCORS: true
-    });
-  }catch(e){
-    console.error("html2canvas failed:", e);
-    document.body.removeChild(temp);
-    return null;
-  }
-
-  document.body.removeChild(temp);
-
   const jsPDF = window.jspdf.jsPDF;
 
   const pdf = new jsPDF({
@@ -968,21 +933,43 @@ async function generateHighQualityPDF(htmlContent){
     format: "a4"
   });
 
-  const pageWidth = pdf.internal.pageSize.getWidth();
+  /* SPLIT BY YOUR EDITOR BREAKS */
+  const parts = (htmlContent || "<p></p>")
+    .split('<div class="a4-page-break"></div>');
 
-  /* 🔥 EXACT MATCH WITH YOUR EDITOR GUIDE */
-  const A4_HEIGHT = 1123;
+  for(let i = 0; i < parts.length; i++){
 
-  const scale = pageWidth / canvas.width;
-  const scaledPageHeight = A4_HEIGHT * scale;
+    const temp = document.createElement("div");
 
-  const fullHeight = canvas.height * scale;
+    temp.style.width = "794px";
+    temp.style.padding = "24px";
+    temp.style.boxSizing = "border-box";
+    temp.style.background = "#ffffff";
+    temp.style.fontFamily = "Segoe UI, Arial";
+    temp.style.fontSize = "16px";
+    temp.style.lineHeight = "1.7";
 
-  let y = 0;
+    temp.style.position = "fixed";
+    temp.style.left = "-9999px";
 
-  while(y < fullHeight){
+    temp.innerHTML = parts[i] || "<p></p>";
 
-    if(y > 0){
+    document.body.appendChild(temp);
+
+    const canvas = await html2canvas(temp, {
+      scale: 2,
+      backgroundColor: "#ffffff"
+    });
+
+    document.body.removeChild(temp);
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth;
+    const imgHeight = canvas.height * pageWidth / canvas.width;
+
+    if(i > 0){
       pdf.addPage();
     }
 
@@ -990,12 +977,10 @@ async function generateHighQualityPDF(htmlContent){
       canvas.toDataURL("image/png"),
       "PNG",
       0,
-      -y,
-      pageWidth,
-      fullHeight
+      0,
+      imgWidth,
+      imgHeight
     );
-
-    y += scaledPageHeight;
   }
 
   return pdf.output("blob");
