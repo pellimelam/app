@@ -926,89 +926,81 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
-  const jsPDF = window.jspdf.jsPDF;
-
-  const pdf = new jsPDF({
-    unit: "px",
-    format: "a4"
-  });
-
-  /* CREATE RENDER ROOT */
   const temp = document.createElement("div");
-
-  temp.style.width = "794px";
-  temp.style.padding = "24px";
-  temp.style.boxSizing = "border-box";
-  temp.style.background = "#ffffff";
-  temp.style.fontFamily = "Segoe UI, Arial";
-  temp.style.fontSize = "16px";
-  temp.style.lineHeight = "1.7";
-
   temp.style.position = "fixed";
   temp.style.left = "-9999px";
   temp.style.top = "0";
+  temp.style.width = "794px";
+  temp.style.background = "#ffffff";
+  temp.style.padding = "40px";
+  temp.style.fontFamily = "Segoe UI, Arial";
 
   temp.innerHTML = htmlContent || "<p></p>";
-
   document.body.appendChild(temp);
 
   const canvas = await html2canvas(temp, {
-    scale: 2,
+    scale: 3, // 🔥 stable + high quality
+    useCORS: true,
     backgroundColor: "#ffffff"
   });
 
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
+  document.body.removeChild(temp);
 
-  /* 🔥 EXACT SAME AS EDITOR */
-  const A4_HEIGHT = 1123;
+  const imgWidth = 794;
+  const pageHeight = 1123;
 
-  const scale = pageWidth / canvas.width;
+  const imgHeight = canvas.height * imgWidth / canvas.width;
 
-  const sliceHeight = A4_HEIGHT * scale;
-  const fullHeight = canvas.height * scale;
+  const jsPDF = window.jspdf.jsPDF;
+  const pdf = new jsPDF({
+    unit: "px",
+    format: [imgWidth, pageHeight]
+  });
 
-  let y = 0;
-  let pageIndex = 0;
+  let position = 0;
 
-  while(y < fullHeight){
+  while(position < imgHeight){
 
-    /* CREATE TEMP CANVAS SLICE */
     const pageCanvas = document.createElement("canvas");
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = pageHeight * canvas.width / imgWidth;
+
     const ctx = pageCanvas.getContext("2d");
 
-    const sourceY = (y / scale);
-    const sourceHeight = (A4_HEIGHT);
+    // ✅ ALWAYS WHITE BACKGROUND (fixes black issue)
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
 
-    pageCanvas.width = canvas.width;
-    pageCanvas.height = sourceHeight;
+    const sourceY = position * canvas.width / imgWidth;
+    const remainingHeight = canvas.height - sourceY;
+
+    const drawHeight = Math.min(
+      pageCanvas.height,
+      remainingHeight
+    );
 
     ctx.drawImage(
       canvas,
-      0, sourceY,
-      canvas.width, sourceHeight,
-      0, 0,
-      canvas.width, sourceHeight
+      0,
+      sourceY,
+      canvas.width,
+      drawHeight,
+      0,
+      0,
+      canvas.width,
+      drawHeight
     );
 
-    if(pageIndex > 0){
+    const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
+
+    if(position > 0){
       pdf.addPage();
     }
 
-    pdf.addImage(
-      pageCanvas.toDataURL("image/png"),
-      "PNG",
-      0,
-      0,
-      pageWidth,
-      pageHeight
-    );
+    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
 
-    y += sliceHeight;
-    pageIndex++;
+    position += pageHeight;
   }
-
-  document.body.removeChild(temp);
 
   return pdf.output("blob");
 }
