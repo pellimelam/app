@@ -926,87 +926,88 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
+  const PAGE_WIDTH = 794;
+  const PAGE_HEIGHT = 1123;
+  const MARGIN_TOP = 60;
+  const MARGIN_BOTTOM = 60;
+  const CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM;
+  const SCALE = 2;
+
   const container = document.createElement("div");
   container.style.position = "fixed";
   container.style.left = "-9999px";
-  container.style.width = "794px";
+  container.style.width = PAGE_WIDTH + "px";
   container.style.background = "#ffffff";
   container.style.padding = "40px";
+  container.style.boxSizing = "border-box";
   container.style.fontFamily = "Segoe UI, Arial";
 
   container.innerHTML = htmlContent || "<p></p>";
   document.body.appendChild(container);
 
-  const jsPDF = window.jspdf.jsPDF;
-  const pdf = new jsPDF({
+  const pdf = new window.jspdf.jsPDF({
     unit: "px",
-    format: [794, 1123]
+    format: [PAGE_WIDTH, PAGE_HEIGHT]
   });
 
-  const pageHeight = 1123;
+  let isFirstPage = true;
+
   let currentPage = document.createElement("div");
-  currentPage.style.width = "794px";
+  currentPage.style.width = PAGE_WIDTH + "px";
+  currentPage.style.boxSizing = "border-box";
   currentPage.style.background = "#ffffff";
   currentPage.style.padding = "40px";
 
-  let tempWrapper = document.createElement("div");
-  tempWrapper.appendChild(currentPage);
-  document.body.appendChild(tempWrapper);
-
-  let currentHeight = 0;
+  const wrapper = document.createElement("div");
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-9999px";
+  wrapper.appendChild(currentPage);
+  document.body.appendChild(wrapper);
 
   const nodes = Array.from(container.children);
+
+  async function renderPage(){
+
+    const canvas = await html2canvas(currentPage, {
+      scale: SCALE,
+      backgroundColor: "#ffffff"
+    });
+
+    if(!isFirstPage){
+      pdf.addPage();
+    }
+
+    pdf.addImage(
+      canvas.toDataURL("image/jpeg", 1.0),
+      "JPEG",
+      0,
+      MARGIN_TOP,              // 🔥 top space
+      PAGE_WIDTH,
+      CONTENT_HEIGHT           // 🔥 fit inside margins
+    );
+
+    isFirstPage = false;
+    currentPage.innerHTML = "";
+  }
 
   for(let node of nodes){
 
     const clone = node.cloneNode(true);
     currentPage.appendChild(clone);
 
-    const newHeight = currentPage.scrollHeight;
-
-    if(newHeight > pageHeight){
-
+    if(currentPage.scrollHeight > CONTENT_HEIGHT){
       currentPage.removeChild(clone);
-
-      // 🔥 render previous page
-      const canvas = await html2canvas(currentPage, {
-        scale: 3,
-        backgroundColor: "#ffffff"
-      });
-
-      const imgData = canvas.toDataURL("image/jpeg", 1.0);
-
-      if(pdf.internal.getNumberOfPages() > 0){
-        pdf.addPage();
-      }
-
-      pdf.addImage(imgData, "JPEG", 0, 0, 794, 1123);
-
-      // 🔥 start new page
-      currentPage.innerHTML = "";
+      await renderPage();
       currentPage.appendChild(clone);
     }
-
   }
 
-  // 🔥 render last page
   if(currentPage.innerHTML.trim()){
-    const canvas = await html2canvas(currentPage, {
-      scale: 3,
-      backgroundColor: "#ffffff"
-    });
-
-    const imgData = canvas.toDataURL("image/jpeg", 1.0);
-
-    if(pdf.internal.getNumberOfPages() > 0){
-      pdf.addPage();
-    }
-
-    pdf.addImage(imgData, "JPEG", 0, 0, 794, 1123);
+    await renderPage();
   }
 
   document.body.removeChild(container);
-  document.body.removeChild(tempWrapper);
+  document.body.removeChild(wrapper);
 
   return pdf.output("blob");
 }
