@@ -41,6 +41,45 @@ word-break:break-word;
 }
 
 
+.editor-content {
+  height: 100%;
+  padding: 20px;
+  background: #ffffff;
+  color: #000000;
+  font-size: 16px;
+  line-height: 1.6;
+  outline: none;
+}
+
+.editor-content .ProseMirror {
+  min-height: 100%;
+  outline: none;
+}
+
+.ProseMirror {
+  caret-color: black;
+}
+
+
+#editorInner {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: auto;
+}
+
+#editorInner .ProseMirror {
+  min-height: 100%;
+  padding: 20px;
+  color: #000000;
+  font-size: 16px;
+  line-height: 1.6;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  outline: none;
+  caret-color: black;
+}
+
+
 
 /* WRAPPER */
 
