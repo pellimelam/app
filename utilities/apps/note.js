@@ -966,7 +966,7 @@ async function generateHighQualityPDF(htmlContent){
   const pageHeight = pdf.internal.pageSize.getHeight();
 
   /* 🔥 SAFE MARGINS */
-  const margin = 20;
+  const margin = 24;
 
   const usableWidth = pageWidth - (margin * 2);
 
@@ -992,7 +992,7 @@ async function generateHighQualityPDF(htmlContent){
       scaledHeight
     );
 
-    y += pageHeight;
+    y += (pageHeight - (margin * 2));
   }
 
   return pdf.output("blob");
