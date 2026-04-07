@@ -926,57 +926,80 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
-  const jsPDF = window.jspdf.jsPDF;
+  const temp = document.createElement("div");
+  temp.style.position = "fixed";
+  temp.style.left = "-9999px";
+  temp.style.top = "0";
+  temp.style.width = "794px";
+  temp.style.background = "#ffffff";
+  temp.style.padding = "40px";
+  temp.style.fontFamily = "Segoe UI, Arial";
 
-  const pdf = new jsPDF({
-    unit: "px",
-    format: [794, 1123]
+  temp.innerHTML = htmlContent || "<p></p>";
+  document.body.appendChild(temp);
+
+  const canvas = await html2canvas(temp, {
+    scale: 3, // 🔥 stable + high quality
+    useCORS: true,
+    backgroundColor: "#ffffff"
   });
 
-  /* SPLIT USING REAL PAGE BREAKS */
-  const parts = (htmlContent || "<p></p>")
-    .split('<div class="a4-page-break"></div>');
+  document.body.removeChild(temp);
 
-  for(let i = 0; i < parts.length; i++){
+  const imgWidth = 794;
+  const pageHeight = 1123;
 
-    const temp = document.createElement("div");
+  const imgHeight = canvas.height * imgWidth / canvas.width;
 
-    temp.style.width = "794px";
-    temp.style.height = "1123px";
-    temp.style.padding = "40px";
-    temp.style.boxSizing = "border-box";
-    temp.style.background = "#ffffff";
-    temp.style.fontFamily = "Segoe UI, Arial";
-    temp.style.fontSize = "16px";
-    temp.style.lineHeight = "1.7";
-    temp.style.overflow = "hidden";
+  const jsPDF = window.jspdf.jsPDF;
+  const pdf = new jsPDF({
+    unit: "px",
+    format: [imgWidth, pageHeight]
+  });
 
-    temp.style.position = "fixed";
-    temp.style.left = "-9999px";
+  let position = 0;
 
-    temp.innerHTML = parts[i] || "<p></p>";
+  while(position < imgHeight){
 
-    document.body.appendChild(temp);
+    const pageCanvas = document.createElement("canvas");
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = pageHeight * canvas.width / imgWidth;
 
-    const canvas = await html2canvas(temp, {
-      scale: 2,
-      backgroundColor: "#ffffff"
-    });
+    const ctx = pageCanvas.getContext("2d");
 
-    document.body.removeChild(temp);
+    // ✅ ALWAYS WHITE BACKGROUND (fixes black issue)
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
 
-    if(i > 0){
-      pdf.addPage([794, 1123]);
+    const sourceY = position * canvas.width / imgWidth;
+    const remainingHeight = canvas.height - sourceY;
+
+    const drawHeight = Math.min(
+      pageCanvas.height,
+      remainingHeight
+    );
+
+    ctx.drawImage(
+      canvas,
+      0,
+      sourceY,
+      canvas.width,
+      drawHeight,
+      0,
+      0,
+      canvas.width,
+      drawHeight
+    );
+
+    const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
+
+    if(position > 0){
+      pdf.addPage();
     }
 
-    pdf.addImage(
-      canvas.toDataURL("image/png"),
-      "PNG",
-      0,
-      0,
-      794,
-      1123
-    );
+    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
+
+    position += pageHeight;
   }
 
   return pdf.output("blob");
