@@ -618,12 +618,8 @@ view.innerHTML = `
     padding:0;
   ">
 
-    <div id="pagesContainer">
-
-      <div class="a4-page">
-        <div id="editor" class="page-content"></div>
-      </div>
-
+    <div id="editorWrapper">
+      <div id="editor"></div>
     </div>
   </div>
 
@@ -645,38 +641,6 @@ APP.insertPageBreak = function(){
 
 
 
-function paginateEditor(){
-
-  const container = document.getElementById("pagesContainer");
-  if(!container) return;
-
-  const pages = Array.from(container.querySelectorAll(".a4-page"));
-
-  for(let i = 0; i < pages.length; i++){
-
-    const page = pages[i];
-    const content = page.querySelector(".page-content");
-
-    while(content.scrollHeight > page.clientHeight){
-
-      let nextPage = pages[i+1];
-
-      if(!nextPage){
-        nextPage = document.createElement("div");
-        nextPage.className = "a4-page";
-        nextPage.innerHTML = `<div class="page-content"></div>`;
-        container.appendChild(nextPage);
-      }
-
-      const nextContent = nextPage.querySelector(".page-content");
-
-      const lastNode = content.lastChild;
-      if(!lastNode) break;
-
-      nextContent.insertBefore(lastNode, nextContent.firstChild);
-    }
-  }
-}
 
 
 
@@ -767,8 +731,7 @@ if(APP.editor){
 
       clearTimeout(saveTimer);
 
-      // 🔥 PAGINATION FIRST
-      setTimeout(paginateEditor, 0);
+    
 
       saveTimer = setTimeout(async () => {
         try {
