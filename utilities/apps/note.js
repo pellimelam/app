@@ -924,7 +924,15 @@ window.goBack = function(){
 
 
 
-async function generateHighQualityPDF(htmlContent){
+async function generateHighQualityPDF(){
+
+  const editorEl = document.querySelector("#editorWrapper");
+
+  const canvas = await html2canvas(editorEl, {
+    scale: 2,
+    backgroundColor: "#ffffff",
+    useCORS: true
+  });
 
   const jsPDF = window.jspdf.jsPDF;
 
@@ -936,84 +944,32 @@ async function generateHighQualityPDF(htmlContent){
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
 
-  const margin = 24;
+  /* 🔥 SAME AS EDITOR GUIDE */
+  const A4_HEIGHT = 1123;
 
-  /* CREATE HIDDEN RENDER ROOT */
-  const root = document.createElement("div");
-  root.style.position = "fixed";
-  root.style.left = "-9999px";
-  root.style.top = "0";
-  root.style.width = "794px";
-  root.style.padding = "24px";
-  root.style.boxSizing = "border-box";
-  root.style.background = "#fff";
+  const scale = pageWidth / canvas.width;
 
-  root.innerHTML = htmlContent || "<p></p>";
-  document.body.appendChild(root);
+  const scaledPageHeight = A4_HEIGHT * scale;
 
-  /* CREATE PAGE WRAPPER */
-  const page = document.createElement("div");
-  page.style.width = "794px";
-  page.style.height = "1123px";
-  page.style.padding = "24px";
-  page.style.boxSizing = "border-box";
-  page.style.background = "#fff";
+  let y = 0;
 
-  document.body.appendChild(page);
+  while(y < canvas.height * scale){
 
-  const nodes = Array.from(root.childNodes);
-
-  let currentHeight = 0;
-
-  for(let node of nodes){
-
-    const clone = node.cloneNode(true);
-    page.appendChild(clone);
-
-    const h = page.scrollHeight;
-
-    if(h > 1123){
-
-      page.removeChild(clone);
-
-      const canvas = await html2canvas(page, {
-        scale: 2,
-        backgroundColor: "#ffffff"
-      });
-
-      const img = canvas.toDataURL("image/jpeg", 1.0);
-
-      if(pdf.getNumberOfPages() > 0){
-        pdf.addPage();
-      }
-
-      pdf.addImage(img, "JPEG", 0, 0, pageWidth, pageHeight);
-
-      page.innerHTML = "";
-      page.appendChild(clone);
-    }
-
-  }
-
-  /* LAST PAGE */
-  if(page.innerHTML.trim() !== ""){
-
-    const canvas = await html2canvas(page, {
-      scale: 2,
-      backgroundColor: "#ffffff"
-    });
-
-    const img = canvas.toDataURL("image/jpeg", 1.0);
-
-    if(pdf.getNumberOfPages() > 0){
+    if(y > 0){
       pdf.addPage();
     }
 
-    pdf.addImage(img, "JPEG", 0, 0, pageWidth, pageHeight);
-  }
+    pdf.addImage(
+      canvas,
+      "PNG",
+      0,
+      -y,
+      pageWidth,
+      canvas.height * scale
+    );
 
-  document.body.removeChild(root);
-  document.body.removeChild(page);
+    y += scaledPageHeight;  // 🔥 EXACT MATCH WITH EDITOR
+  }
 
   return pdf.output("blob");
 }
