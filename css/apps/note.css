@@ -166,27 +166,4 @@ TEXT SELECTION UX
 
 
 
-#editorWrapper{
-  width:794px;
-  margin:auto;
-  background:#fff;
-  padding:40px;
-  box-sizing:border-box;
-}
 
-/* 🔥 VISUAL PAGE BREAK SYSTEM */
-.ProseMirror{
-  max-width:714px;
-}
-
-/* fake pages using background */
-.note-app{
-  background: linear-gradient(
-    to bottom,
-    #ffffff 0px,
-    #ffffff 1123px,
-    #e5e7eb 1123px,
-    #e5e7eb 1143px
-  );
-  background-size: 100% 1143px;
-}
