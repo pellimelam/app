@@ -932,7 +932,7 @@ async function generateHighQualityPDF(htmlContent){
   temp.style.left = "-9999px";
   temp.style.top = "0";
 
-  /* ✅ MATCH EDITOR EXACTLY */
+  /* MATCH EDITOR */
   temp.style.width = "794px";
   temp.style.background = "#ffffff";
   temp.style.padding = "24px";
@@ -951,20 +951,40 @@ async function generateHighQualityPDF(htmlContent){
 
   document.body.removeChild(temp);
 
-  const imgWidth = canvas.width;
-  const imgHeight = canvas.height;
-
   const jsPDF = window.jspdf.jsPDF;
 
-  /* ✅ SINGLE PAGE = FULL CONTENT */
   const pdf = new jsPDF({
     unit: "px",
-    format: [imgWidth, imgHeight]
+    format: "a4"   // ✅ FIXED A4
   });
 
-  const imgData = canvas.toDataURL("image/jpeg", 1.0);
+  const pageWidth = 595;   // A4 width in px
+  const pageHeight = 842;  // A4 height
 
-  pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, imgHeight);
+  const imgWidth = pageWidth;
+  const imgHeight = canvas.height * pageWidth / canvas.width;
+
+  let position = 0;
+
+  while(position < imgHeight){
+
+    const remainingHeight = imgHeight - position;
+
+    if(position > 0){
+      pdf.addPage();
+    }
+
+    pdf.addImage(
+      canvas.toDataURL("image/jpeg", 1.0),
+      "JPEG",
+      0,
+      -position,
+      imgWidth,
+      imgHeight
+    );
+
+    position += pageHeight;
+  }
 
   return pdf.output("blob");
 }
