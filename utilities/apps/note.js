@@ -939,7 +939,7 @@ async function generateHighQualityPDF(htmlContent){
   document.body.appendChild(temp);
 
   const canvas = await html2canvas(temp, {
-    scale: 3, // 🔥 stable + high quality
+    scale: 3,
     useCORS: true,
     backgroundColor: "#ffffff"
   });
@@ -948,6 +948,11 @@ async function generateHighQualityPDF(htmlContent){
 
   const imgWidth = 794;
   const pageHeight = 1123;
+
+  // ✅ PAGE MARGINS (ONLY CHANGE)
+  const TOP_MARGIN = 40;
+  const BOTTOM_MARGIN = 40;
+  const CONTENT_HEIGHT = pageHeight - TOP_MARGIN - BOTTOM_MARGIN;
 
   const imgHeight = canvas.height * imgWidth / canvas.width;
 
@@ -963,11 +968,11 @@ async function generateHighQualityPDF(htmlContent){
 
     const pageCanvas = document.createElement("canvas");
     pageCanvas.width = canvas.width;
-    pageCanvas.height = pageHeight * canvas.width / imgWidth;
+    pageCanvas.height = CONTENT_HEIGHT * canvas.width / imgWidth;
 
     const ctx = pageCanvas.getContext("2d");
 
-    // ✅ ALWAYS WHITE BACKGROUND (fixes black issue)
+    // ✅ ALWAYS WHITE (no black issue)
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
 
@@ -997,9 +1002,18 @@ async function generateHighQualityPDF(htmlContent){
       pdf.addPage();
     }
 
-    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
+    // ✅ ONLY PAGE SHIFT (NO DISTORTION)
+    pdf.addImage(
+      imgData,
+      "JPEG",
+      0,
+      TOP_MARGIN,
+      imgWidth,
+      CONTENT_HEIGHT
+    );
 
-    position += pageHeight;
+    // ✅ FIX PAGINATION STEP
+    position += CONTENT_HEIGHT;
   }
 
   return pdf.output("blob");
