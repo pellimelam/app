@@ -928,21 +928,25 @@ async function generateHighQualityPDF(htmlContent){
 
   const temp = document.createElement("div");
 
+  /* EXACT CLONE OF EDITOR */
   temp.style.position = "fixed";
   temp.style.left = "-9999px";
   temp.style.top = "0";
 
-  /* MATCH EDITOR */
   temp.style.width = "794px";
-  temp.style.background = "#ffffff";
   temp.style.padding = "24px";
+  temp.style.boxSizing = "border-box";
+
+  temp.style.background = "#ffffff";
   temp.style.fontFamily = "Segoe UI, Arial";
-  temp.style.lineHeight = "1.7";
   temp.style.fontSize = "16px";
+  temp.style.lineHeight = "1.7";
+  temp.style.color = "#111";
 
   temp.innerHTML = htmlContent || "<p></p>";
   document.body.appendChild(temp);
 
+  /* RENDER FULL CANVAS */
   const canvas = await html2canvas(temp, {
     scale: 2,
     backgroundColor: "#ffffff",
@@ -955,35 +959,40 @@ async function generateHighQualityPDF(htmlContent){
 
   const pdf = new jsPDF({
     unit: "px",
-    format: "a4"   // ✅ FIXED A4
+    format: "a4"
   });
 
-  const pageWidth = 595;   // A4 width in px
-  const pageHeight = 842;  // A4 height
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
 
-  const imgWidth = pageWidth;
-  const imgHeight = canvas.height * pageWidth / canvas.width;
+  /* 🔥 SAFE MARGINS */
+  const margin = 20;
 
-  let position = 0;
+  const usableWidth = pageWidth - (margin * 2);
 
-  while(position < imgHeight){
+  /* SCALE PERFECTLY */
+  const scale = usableWidth / canvas.width;
 
-    const remainingHeight = imgHeight - position;
+  const scaledHeight = canvas.height * scale;
 
-    if(position > 0){
+  let y = 0;
+
+  while(y < scaledHeight){
+
+    if(y > 0){
       pdf.addPage();
     }
 
     pdf.addImage(
       canvas.toDataURL("image/jpeg", 1.0),
       "JPEG",
-      0,
-      -position,
-      imgWidth,
-      imgHeight
+      margin,
+      margin - y,
+      usableWidth,
+      scaledHeight
     );
 
-    position += pageHeight;
+    y += pageHeight;
   }
 
   return pdf.output("blob");
