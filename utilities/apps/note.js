@@ -926,29 +926,34 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
+  const PAGE_WIDTH = 794;
+  const PAGE_HEIGHT = 1123;
+  const SCALE = 2; // stable + sharp
+
   const container = document.createElement("div");
   container.style.position = "fixed";
   container.style.left = "-9999px";
-  container.style.width = "794px";
+  container.style.width = PAGE_WIDTH + "px";
   container.style.background = "#ffffff";
   container.style.padding = "40px";
+  container.style.boxSizing = "border-box";
   container.style.fontFamily = "Segoe UI, Arial";
 
   container.innerHTML = htmlContent || "<p></p>";
   document.body.appendChild(container);
 
-  const jsPDF = window.jspdf.jsPDF;
-  const pdf = new jsPDF({
+  const pdf = new window.jspdf.jsPDF({
     unit: "px",
-    format: [794, 1123]
+    format: [PAGE_WIDTH, PAGE_HEIGHT]
   });
 
-  const pageHeight = 1123;
+  let isFirstPage = true;
 
   let currentPage = document.createElement("div");
-  currentPage.style.width = "794px";
+  currentPage.style.width = PAGE_WIDTH + "px";
   currentPage.style.background = "#ffffff";
   currentPage.style.padding = "40px";
+  currentPage.style.boxSizing = "border-box";
 
   const wrapper = document.createElement("div");
   wrapper.style.position = "fixed";
@@ -963,49 +968,66 @@ async function generateHighQualityPDF(htmlContent){
     const clone = node.cloneNode(true);
     currentPage.appendChild(clone);
 
-    const pageContentHeight = currentPage.scrollHeight;
+    const height = currentPage.scrollHeight;
 
-    if(pageContentHeight > pageHeight){
+    if(height > PAGE_HEIGHT){
 
-      // ❌ remove paragraph (don’t split)
+      // remove overflowing node
       currentPage.removeChild(clone);
 
-      // ✅ render current page (with white space)
+      // render page
       const canvas = await html2canvas(currentPage, {
-        scale: 3,
+        scale: SCALE,
         backgroundColor: "#ffffff"
       });
 
-      const imgData = canvas.toDataURL("image/jpeg", 1.0);
+      const imgWidth = PAGE_WIDTH;
+      const imgHeight = canvas.height * (imgWidth / canvas.width);
 
-      if(pdf.internal.getNumberOfPages() > 0){
+      if(!isFirstPage){
         pdf.addPage();
       }
 
-      pdf.addImage(imgData, "JPEG", 0, 0, 794, 1123);
+      pdf.addImage(
+        canvas.toDataURL("image/jpeg", 1.0),
+        "JPEG",
+        0,
+        0,
+        imgWidth,
+        imgHeight
+      );
 
-      // 🔥 start new page
+      isFirstPage = false;
+
+      // new page
       currentPage.innerHTML = "";
-
-      // ✅ add full paragraph to next page
       currentPage.appendChild(clone);
     }
   }
 
-  // ✅ render last page
+  // last page
   if(currentPage.innerHTML.trim()){
+
     const canvas = await html2canvas(currentPage, {
-      scale: 3,
+      scale: SCALE,
       backgroundColor: "#ffffff"
     });
 
-    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+    const imgWidth = PAGE_WIDTH;
+    const imgHeight = canvas.height * (imgWidth / canvas.width);
 
-    if(pdf.internal.getNumberOfPages() > 0){
+    if(!isFirstPage){
       pdf.addPage();
     }
 
-    pdf.addImage(imgData, "JPEG", 0, 0, 794, 1123);
+    pdf.addImage(
+      canvas.toDataURL("image/jpeg", 1.0),
+      "JPEG",
+      0,
+      0,
+      imgWidth,
+      imgHeight
+    );
   }
 
   document.body.removeChild(container);
