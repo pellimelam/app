@@ -926,39 +926,40 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
-  let targetEl = document.querySelector("#editorWrapper");
+  /* ALWAYS CREATE SAFE RENDER ELEMENT */
+  const temp = document.createElement("div");
 
-  /* ✅ IF EDITOR NOT PRESENT (EXPORT CASE) */
-  if(!targetEl){
+  temp.style.width = "794px";
+  temp.style.padding = "24px";
+  temp.style.boxSizing = "border-box";
+  temp.style.background = "#ffffff";
+  temp.style.fontFamily = "Segoe UI, Arial";
+  temp.style.fontSize = "16px";
+  temp.style.lineHeight = "1.7";
 
-    targetEl = document.createElement("div");
+  temp.style.position = "fixed";
+  temp.style.left = "-9999px";
+  temp.style.top = "0";
 
-    targetEl.style.width = "794px";
-    targetEl.style.padding = "24px";
-    targetEl.style.boxSizing = "border-box";
-    targetEl.style.background = "#ffffff";
-    targetEl.style.fontFamily = "Segoe UI, Arial";
-    targetEl.style.fontSize = "16px";
-    targetEl.style.lineHeight = "1.7";
+  temp.innerHTML = htmlContent || "<p></p>";
 
-    targetEl.innerHTML = htmlContent || "<p></p>";
+  document.body.appendChild(temp);
 
-    targetEl.style.position = "fixed";
-    targetEl.style.left = "-9999px";
+  let canvas;
 
-    document.body.appendChild(targetEl);
+  try{
+    canvas = await html2canvas(temp, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true
+    });
+  }catch(e){
+    console.error("html2canvas failed:", e);
+    document.body.removeChild(temp);
+    return null;
   }
 
-  const canvas = await html2canvas(targetEl, {
-    scale: 2,
-    backgroundColor: "#ffffff",
-    useCORS: true
-  });
-
-  /* REMOVE TEMP */
-  if(targetEl && targetEl.style.left === "-9999px"){
-    document.body.removeChild(targetEl);
-  }
+  document.body.removeChild(temp);
 
   const jsPDF = window.jspdf.jsPDF;
 
@@ -969,27 +970,29 @@ async function generateHighQualityPDF(htmlContent){
 
   const pageWidth = pdf.internal.pageSize.getWidth();
 
-  /* 🔥 SAME AS EDITOR GUIDE */
+  /* 🔥 EXACT MATCH WITH YOUR EDITOR GUIDE */
   const A4_HEIGHT = 1123;
 
   const scale = pageWidth / canvas.width;
   const scaledPageHeight = A4_HEIGHT * scale;
 
+  const fullHeight = canvas.height * scale;
+
   let y = 0;
 
-  while(y < canvas.height * scale){
+  while(y < fullHeight){
 
     if(y > 0){
       pdf.addPage();
     }
 
     pdf.addImage(
-      canvas,
+      canvas.toDataURL("image/png"),
       "PNG",
       0,
       -y,
       pageWidth,
-      canvas.height * scale
+      fullHeight
     );
 
     y += scaledPageHeight;
