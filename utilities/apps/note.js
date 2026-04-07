@@ -933,55 +933,82 @@ async function generateHighQualityPDF(htmlContent){
     format: "a4"
   });
 
-  /* SPLIT BY YOUR EDITOR BREAKS */
-  const parts = (htmlContent || "<p></p>")
-    .split('<div class="a4-page-break"></div>');
+  /* CREATE RENDER ROOT */
+  const temp = document.createElement("div");
 
-  for(let i = 0; i < parts.length; i++){
+  temp.style.width = "794px";
+  temp.style.padding = "24px";
+  temp.style.boxSizing = "border-box";
+  temp.style.background = "#ffffff";
+  temp.style.fontFamily = "Segoe UI, Arial";
+  temp.style.fontSize = "16px";
+  temp.style.lineHeight = "1.7";
 
-    const temp = document.createElement("div");
+  temp.style.position = "fixed";
+  temp.style.left = "-9999px";
+  temp.style.top = "0";
 
-    temp.style.width = "794px";
-    temp.style.padding = "24px";
-    temp.style.boxSizing = "border-box";
-    temp.style.background = "#ffffff";
-    temp.style.fontFamily = "Segoe UI, Arial";
-    temp.style.fontSize = "16px";
-    temp.style.lineHeight = "1.7";
+  temp.innerHTML = htmlContent || "<p></p>";
 
-    temp.style.position = "fixed";
-    temp.style.left = "-9999px";
+  document.body.appendChild(temp);
 
-    temp.innerHTML = parts[i] || "<p></p>";
+  const canvas = await html2canvas(temp, {
+    scale: 2,
+    backgroundColor: "#ffffff"
+  });
 
-    document.body.appendChild(temp);
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
 
-    const canvas = await html2canvas(temp, {
-      scale: 2,
-      backgroundColor: "#ffffff"
-    });
+  /* 🔥 EXACT SAME AS EDITOR */
+  const A4_HEIGHT = 1123;
 
-    document.body.removeChild(temp);
+  const scale = pageWidth / canvas.width;
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+  const sliceHeight = A4_HEIGHT * scale;
+  const fullHeight = canvas.height * scale;
 
-    const imgWidth = pageWidth;
-    const imgHeight = canvas.height * pageWidth / canvas.width;
+  let y = 0;
+  let pageIndex = 0;
 
-    if(i > 0){
+  while(y < fullHeight){
+
+    /* CREATE TEMP CANVAS SLICE */
+    const pageCanvas = document.createElement("canvas");
+    const ctx = pageCanvas.getContext("2d");
+
+    const sourceY = (y / scale);
+    const sourceHeight = (A4_HEIGHT);
+
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = sourceHeight;
+
+    ctx.drawImage(
+      canvas,
+      0, sourceY,
+      canvas.width, sourceHeight,
+      0, 0,
+      canvas.width, sourceHeight
+    );
+
+    if(pageIndex > 0){
       pdf.addPage();
     }
 
     pdf.addImage(
-      canvas.toDataURL("image/png"),
+      pageCanvas.toDataURL("image/png"),
       "PNG",
       0,
       0,
-      imgWidth,
-      imgHeight
+      pageWidth,
+      pageHeight
     );
+
+    y += sliceHeight;
+    pageIndex++;
   }
+
+  document.body.removeChild(temp);
 
   return pdf.output("blob");
 }
