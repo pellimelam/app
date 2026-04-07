@@ -926,80 +926,57 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
-  const temp = document.createElement("div");
-  temp.style.position = "fixed";
-  temp.style.left = "-9999px";
-  temp.style.top = "0";
-  temp.style.width = "794px";
-  temp.style.background = "#ffffff";
-  temp.style.padding = "40px";
-  temp.style.fontFamily = "Segoe UI, Arial";
-
-  temp.innerHTML = htmlContent || "<p></p>";
-  document.body.appendChild(temp);
-
-  const canvas = await html2canvas(temp, {
-    scale: 3, // 🔥 stable + high quality
-    useCORS: true,
-    backgroundColor: "#ffffff"
-  });
-
-  document.body.removeChild(temp);
-
-  const imgWidth = 794;
-  const pageHeight = 1123;
-
-  const imgHeight = canvas.height * imgWidth / canvas.width;
-
   const jsPDF = window.jspdf.jsPDF;
+
   const pdf = new jsPDF({
     unit: "px",
-    format: [imgWidth, pageHeight]
+    format: [794, 1123]
   });
 
-  let position = 0;
+  /* SPLIT USING REAL PAGE BREAKS */
+  const parts = (htmlContent || "<p></p>")
+    .split('<div class="a4-page-break"></div>');
 
-  while(position < imgHeight){
+  for(let i = 0; i < parts.length; i++){
 
-    const pageCanvas = document.createElement("canvas");
-    pageCanvas.width = canvas.width;
-    pageCanvas.height = pageHeight * canvas.width / imgWidth;
+    const temp = document.createElement("div");
 
-    const ctx = pageCanvas.getContext("2d");
+    temp.style.width = "794px";
+    temp.style.height = "1123px";
+    temp.style.padding = "40px";
+    temp.style.boxSizing = "border-box";
+    temp.style.background = "#ffffff";
+    temp.style.fontFamily = "Segoe UI, Arial";
+    temp.style.fontSize = "16px";
+    temp.style.lineHeight = "1.7";
+    temp.style.overflow = "hidden";
 
-    // ✅ ALWAYS WHITE BACKGROUND (fixes black issue)
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+    temp.style.position = "fixed";
+    temp.style.left = "-9999px";
 
-    const sourceY = position * canvas.width / imgWidth;
-    const remainingHeight = canvas.height - sourceY;
+    temp.innerHTML = parts[i] || "<p></p>";
 
-    const drawHeight = Math.min(
-      pageCanvas.height,
-      remainingHeight
-    );
+    document.body.appendChild(temp);
 
-    ctx.drawImage(
-      canvas,
-      0,
-      sourceY,
-      canvas.width,
-      drawHeight,
-      0,
-      0,
-      canvas.width,
-      drawHeight
-    );
+    const canvas = await html2canvas(temp, {
+      scale: 2,
+      backgroundColor: "#ffffff"
+    });
 
-    const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
+    document.body.removeChild(temp);
 
-    if(position > 0){
-      pdf.addPage();
+    if(i > 0){
+      pdf.addPage([794, 1123]);
     }
 
-    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
-
-    position += pageHeight;
+    pdf.addImage(
+      canvas.toDataURL("image/png"),
+      "PNG",
+      0,
+      0,
+      794,
+      1123
+    );
   }
 
   return pdf.output("blob");
