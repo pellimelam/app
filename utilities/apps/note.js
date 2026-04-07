@@ -618,14 +618,12 @@ view.innerHTML = `
     padding:0;
   ">
 
-    <div id="editorWrapper" style="
-      width:100%;
-      max-width:794px;
-      margin:auto;
-      background:white;
-    ">
+    <div id="pagesContainer">
 
-      <div id="editor" style="min-height:100vh;"></div>
+      <div class="a4-page">
+        <div id="editor" class="page-content"></div>
+      </div>
+
     </div>
   </div>
 
@@ -644,6 +642,53 @@ APP.insertPageBreak = function(){
 
 
 
+
+
+
+function paginateEditor(){
+
+  const container = document.getElementById("pagesContainer");
+  if(!container) return;
+
+  const pages = Array.from(container.querySelectorAll(".a4-page"));
+
+  for(let i = 0; i < pages.length; i++){
+
+    const page = pages[i];
+    const content = page.querySelector(".page-content");
+
+    while(content.scrollHeight > page.clientHeight){
+
+      let nextPage = pages[i+1];
+
+      if(!nextPage){
+        nextPage = document.createElement("div");
+        nextPage.className = "a4-page";
+        nextPage.innerHTML = `<div class="page-content"></div>`;
+        container.appendChild(nextPage);
+      }
+
+      const nextContent = nextPage.querySelector(".page-content");
+
+      const lastNode = content.lastChild;
+      if(!lastNode) break;
+
+      nextContent.insertBefore(lastNode, nextContent.firstChild);
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+  
   
 
 
@@ -721,6 +766,9 @@ if(APP.editor){
     return ({ editor }) => {
 
       clearTimeout(saveTimer);
+
+      // 🔥 PAGINATION FIRST
+      setTimeout(paginateEditor, 0);
 
       saveTimer = setTimeout(async () => {
         try {
@@ -926,81 +974,46 @@ window.goBack = function(){
 
 async function generateHighQualityPDF(htmlContent){
 
-  const temp = document.createElement("div");
-  temp.style.position = "fixed";
-  temp.style.left = "-9999px";
-  temp.style.top = "0";
-  temp.style.width = "794px";
-  temp.style.background = "#ffffff";
-  temp.style.padding = "40px";
-  temp.style.fontFamily = "Segoe UI, Arial";
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.left = "-9999px";
 
-  temp.innerHTML = htmlContent || "<p></p>";
-  document.body.appendChild(temp);
+  container.innerHTML = htmlContent;
+  document.body.appendChild(container);
 
-  const canvas = await html2canvas(temp, {
-    scale: 3, // 🔥 stable + high quality
-    useCORS: true,
-    backgroundColor: "#ffffff"
-  });
+  const pages = container.querySelectorAll(".a4-page");
 
-  document.body.removeChild(temp);
-
-  const imgWidth = 794;
-  const pageHeight = 1123;
-
-  const imgHeight = canvas.height * imgWidth / canvas.width;
-
-  const jsPDF = window.jspdf.jsPDF;
-  const pdf = new jsPDF({
+  const pdf = new window.jspdf.jsPDF({
     unit: "px",
-    format: [imgWidth, pageHeight]
+    format: [794, 1123]
   });
 
-  let position = 0;
+  let first = true;
 
-  while(position < imgHeight){
+  for(let page of pages){
 
-    const pageCanvas = document.createElement("canvas");
-    pageCanvas.width = canvas.width;
-    pageCanvas.height = pageHeight * canvas.width / imgWidth;
+    const canvas = await html2canvas(page, {
+      scale: 2,
+      backgroundColor: "#ffffff"
+    });
 
-    const ctx = pageCanvas.getContext("2d");
-
-    // ✅ ALWAYS WHITE BACKGROUND (fixes black issue)
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-
-    const sourceY = position * canvas.width / imgWidth;
-    const remainingHeight = canvas.height - sourceY;
-
-    const drawHeight = Math.min(
-      pageCanvas.height,
-      remainingHeight
-    );
-
-    ctx.drawImage(
-      canvas,
-      0,
-      sourceY,
-      canvas.width,
-      drawHeight,
-      0,
-      0,
-      canvas.width,
-      drawHeight
-    );
-
-    const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
-
-    if(position > 0){
+    if(!first){
       pdf.addPage();
     }
 
-    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
+    pdf.addImage(
+      canvas.toDataURL("image/jpeg", 1.0),
+      "JPEG",
+      0,
+      0,
+      794,
+      1123
+    );
 
-    position += pageHeight;
+    first = false;
   }
+
+  document.body.removeChild(container);
 
   return pdf.output("blob");
 }
