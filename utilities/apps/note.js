@@ -618,14 +618,14 @@ view.innerHTML = `
     padding:0;
   ">
 
-    <div id="editorWrapper">
+    <div id="editorWrapper" style="
+      width:100%;
+      max-width:794px;
+      margin:auto;
+      background:white;
+    ">
 
-      <div class="a4-container">
-        <div class="a4-page">
-          <div id="editor"></div>
-        </div>
-      </div>
-
+      <div id="editor" style="min-height:100vh;"></div>
     </div>
   </div>
 
@@ -712,9 +712,7 @@ if(APP.editor){
   content: page.content && page.content.trim() !== "" ? page.content : "",
 
   editorProps: {
-    attributes: {
-      class: "ProseMirror"
-    }
+    attributes: {}
   },
 
   onUpdate: (() => {
@@ -736,18 +734,16 @@ if(APP.editor){
           }
 
           await saveNote(note);
-    
 
         } catch (e) {
           console.error("SAVE FAILED", e);
         }
-      }, 300);
+      }, 500);
 
     };
   })()
 
 });
-
 
 })();
 };
@@ -1049,6 +1045,3 @@ async function generateHighQualityPDF(htmlContent){
 
   return pdf.output("blob");
 }
-
-
-
