@@ -927,24 +927,63 @@ window.goBack = function(){
 async function generateHighQualityPDF(htmlContent){
 
   const temp = document.createElement("div");
+
+  /* =========================
+     EXACT EDITOR MATCH STYLES
+  ========================= */
+
   temp.style.position = "fixed";
   temp.style.left = "-9999px";
   temp.style.top = "0";
-  temp.style.width = "794px";
-  temp.style.background = "#ffffff";
-  temp.style.padding = "40px";
-  temp.style.fontFamily = "Segoe UI, Arial";
 
-  temp.innerHTML = htmlContent || "<p></p>";
+  temp.style.width = "794px"; // A4 width
+  temp.style.background = "#ffffff";
+
+  temp.style.padding = "24px"; // match editor padding
+  temp.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+  temp.style.fontSize = "16px";
+  temp.style.lineHeight = "1.7";
+  temp.style.color = "#111827";
+
+  temp.style.whiteSpace = "pre-wrap";   // 🔥 critical for spacing
+  temp.style.wordBreak = "break-word";
+
+  /* =========================
+     PRESERVE EMPTY LINES
+  ========================= */
+
+  let processedHTML = htmlContent || "<p></p>";
+
+  processedHTML = processedHTML
+    .replace(/<p><\/p>/g, "<p>&nbsp;</p>")
+    .replace(/<p>\s*<\/p>/g, "<p>&nbsp;</p>");
+
+  temp.innerHTML = processedHTML;
+
+  /* ensure empty paragraphs render */
+  temp.querySelectorAll("p").forEach(p => {
+    if (p.innerHTML.trim() === "" || p.innerHTML === "&nbsp;") {
+      p.innerHTML = "&nbsp;";
+    }
+  });
+
   document.body.appendChild(temp);
 
+  /* =========================
+     RENDER TO CANVAS
+  ========================= */
+
   const canvas = await html2canvas(temp, {
-    scale: 3, // 🔥 stable + high quality
+    scale: 3,
     useCORS: true,
     backgroundColor: "#ffffff"
   });
 
   document.body.removeChild(temp);
+
+  /* =========================
+     PDF GENERATION (A4)
+  ========================= */
 
   const imgWidth = 794;
   const pageHeight = 1123;
@@ -952,6 +991,7 @@ async function generateHighQualityPDF(htmlContent){
   const imgHeight = canvas.height * imgWidth / canvas.width;
 
   const jsPDF = window.jspdf.jsPDF;
+
   const pdf = new jsPDF({
     unit: "px",
     format: [imgWidth, pageHeight]
@@ -962,12 +1002,13 @@ async function generateHighQualityPDF(htmlContent){
   while(position < imgHeight){
 
     const pageCanvas = document.createElement("canvas");
+
     pageCanvas.width = canvas.width;
     pageCanvas.height = pageHeight * canvas.width / imgWidth;
 
     const ctx = pageCanvas.getContext("2d");
 
-    // ✅ ALWAYS WHITE BACKGROUND (fixes black issue)
+    /* force white background */
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
 
