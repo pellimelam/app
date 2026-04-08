@@ -928,24 +928,35 @@ async function generateHighQualityPDF(htmlContent){
 
   const temp = document.createElement("div");
 
+  /* =========================
+     MATCH EDITOR EXACTLY
+  ========================= */
+
   temp.style.position = "fixed";
   temp.style.left = "-9999px";
   temp.style.top = "0";
 
-  temp.style.width = "746px";
+  temp.style.width = "794px";
+  temp.style.maxWidth = "794px";
   temp.style.background = "#ffffff";
 
+  temp.style.padding = "24px";
+  temp.style.boxSizing = "border-box";
 
-  temp.style.padding = "0px";
   temp.style.fontFamily = "'Segoe UI', Arial, sans-serif";
   temp.style.fontSize = "16px";
   temp.style.lineHeight = "1.7";
   temp.style.color = "#111827";
 
-  temp.style.boxSizing = "border-box";
-
   temp.style.whiteSpace = "pre-wrap";
-  temp.style.wordBreak = "break-word";
+  temp.style.wordBreak = "normal";
+  temp.style.overflowWrap = "break-word";
+
+  temp.style.overflow = "visible"; // 🔥 prevent clipping
+
+  /* =========================
+     PRESERVE EMPTY LINES
+  ========================= */
 
   let processedHTML = htmlContent || "<p></p>";
 
@@ -963,12 +974,22 @@ async function generateHighQualityPDF(htmlContent){
 
   document.body.appendChild(temp);
 
+  /* =========================
+     RENDER (NO CUT FIX)
+  ========================= */
+
   const canvas = await html2canvas(temp, {
     scale: 2,
-    backgroundColor: "#ffffff"
+    backgroundColor: "#ffffff",
+    width: temp.scrollWidth,
+    windowWidth: temp.scrollWidth
   });
 
   document.body.removeChild(temp);
+
+  /* =========================
+     PDF GENERATION (A4)
+  ========================= */
 
   const jsPDF = window.jspdf.jsPDF;
 
@@ -977,16 +998,11 @@ async function generateHighQualityPDF(htmlContent){
     format: "a4"
   });
 
-  /* =========================
-     EXACT A4 IN PIXELS
-  ========================= */
-
-  const A4_WIDTH_PX = 794;
-  const A4_HEIGHT_PX = 1123;
-
-  const pageHeightPx = A4_HEIGHT_PX * 2; // scale=2
   const pageWidthMm = 210;
   const pageHeightMm = 297;
+
+  const A4_HEIGHT_PX = 1123;
+  const pageHeightPx = A4_HEIGHT_PX * 2; // scale=2
 
   let position = 0;
 
