@@ -139,32 +139,12 @@ TEXT SELECTION UX
 
 
 
-/* =========================
-A4 PAGE GUIDE (VISUAL ONLY)
-========================= */
-
-/* Make editor wrapper reference */
-#editorWrapper{
-  position: relative;
-}
-
-/* A4 break lines */
-#editorWrapper::after{
-  content: "";
+.a4-guide-line {
   position: absolute;
   left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-
+  right: 0;
+  border-top: 2px dashed red;
+  opacity: 0.5;
   pointer-events: none;
-
-  /* A4 height minus padding (24px top + bottom = 48px) */
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent 1122px,
-    #e5e7eb 1123px,
-    #e5e7eb 1125px
-  );
+  z-index: 10;
 }
