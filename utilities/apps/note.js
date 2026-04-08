@@ -932,14 +932,17 @@ async function generateHighQualityPDF(htmlContent){
   temp.style.left = "-9999px";
   temp.style.top = "0";
 
-  temp.style.width = "794px";
+  temp.style.width = "746px";
   temp.style.background = "#ffffff";
 
-  temp.style.padding = "24px";
+
+  temp.style.padding = "0px";
   temp.style.fontFamily = "'Segoe UI', Arial, sans-serif";
   temp.style.fontSize = "16px";
   temp.style.lineHeight = "1.7";
   temp.style.color = "#111827";
+
+  temp.style.boxSizing = "border-box";
 
   temp.style.whiteSpace = "pre-wrap";
   temp.style.wordBreak = "break-word";
