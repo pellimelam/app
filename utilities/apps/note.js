@@ -618,14 +618,14 @@ view.innerHTML = `
     padding:0;
   ">
 
-    <div id="editorWrapper" style="
-      width:100%;
-      max-width:794px;
-      margin:auto;
-      background:white;
-    ">
+    <div id="editorWrapper">
 
-      <div id="editor" style="min-height:100vh;"></div>
+      <div class="a4-container">
+        <div class="a4-page">
+          <div id="editor"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -712,7 +712,9 @@ if(APP.editor){
   content: page.content && page.content.trim() !== "" ? page.content : "",
 
   editorProps: {
-    attributes: {}
+    attributes: {
+      class: "ProseMirror"
+    }
   },
 
   onUpdate: (() => {
@@ -734,7 +736,7 @@ if(APP.editor){
           }
 
           await saveNote(note);
-          addA4GuideLines();
+    
 
         } catch (e) {
           console.error("SAVE FAILED", e);
@@ -746,9 +748,6 @@ if(APP.editor){
 
 });
 
-setTimeout(() => {
-  addA4GuideLines();
-}, 300);
 
 })();
 };
@@ -1052,39 +1051,4 @@ async function generateHighQualityPDF(htmlContent){
 }
 
 
-function addA4GuideLines(){
 
-  const editor = document.querySelector(".ProseMirror");
-  if(!editor) return;
-
-  // remove old lines
-  document.querySelectorAll(".a4-guide-line").forEach(e => e.remove());
-
-  const pageHeight = 1123;
-  const padding = 48; // top + bottom (24 + 24)
-  const usableHeight = pageHeight - padding;
-
-  const totalHeight = editor.scrollHeight;
-
-  let current = usableHeight;
-
-  while(current < totalHeight){
-
-    const line = document.createElement("div");
-    line.className = "a4-guide-line";
-
-    line.style.position = "absolute";
-    line.style.left = "0";
-    line.style.right = "0";
-    line.style.top = current + "px";
-
-    line.style.borderTop = "2px dashed red";
-    line.style.opacity = "0.5";
-    line.style.zIndex = "5";
-    line.style.pointerEvents = "none";
-
-    editor.appendChild(line);
-
-    current += usableHeight;
-  }
-}
