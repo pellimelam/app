@@ -929,7 +929,7 @@ async function generateHighQualityPDF(htmlContent){
   const temp = document.createElement("div");
 
   /* =========================
-     MATCH EDITOR EXACTLY
+     EXACT EDITOR MATCH
   ========================= */
 
   temp.style.position = "fixed";
@@ -937,7 +937,6 @@ async function generateHighQualityPDF(htmlContent){
   temp.style.top = "0";
 
   temp.style.width = "794px";
-  temp.style.maxWidth = "794px";
   temp.style.background = "#ffffff";
 
   temp.style.padding = "24px";
@@ -951,8 +950,6 @@ async function generateHighQualityPDF(htmlContent){
   temp.style.whiteSpace = "pre-wrap";
   temp.style.wordBreak = "normal";
   temp.style.overflowWrap = "break-word";
-
-  temp.style.overflow = "visible"; // 🔥 prevent clipping
 
   /* =========================
      PRESERVE EMPTY LINES
@@ -975,20 +972,20 @@ async function generateHighQualityPDF(htmlContent){
   document.body.appendChild(temp);
 
   /* =========================
-     RENDER (NO CUT FIX)
+     RENDER (NO SCALING TRICKS)
   ========================= */
 
+  const scale = 2;
+
   const canvas = await html2canvas(temp, {
-    scale: 2,
-    backgroundColor: "#ffffff",
-    width: temp.scrollWidth,
-    windowWidth: temp.scrollWidth
+    scale: scale,
+    backgroundColor: "#ffffff"
   });
 
   document.body.removeChild(temp);
 
   /* =========================
-     PDF GENERATION (A4)
+     PDF (TRUE A4 + NO DISTORTION)
   ========================= */
 
   const jsPDF = window.jspdf.jsPDF;
@@ -1002,7 +999,7 @@ async function generateHighQualityPDF(htmlContent){
   const pageHeightMm = 297;
 
   const A4_HEIGHT_PX = 1123;
-  const pageHeightPx = A4_HEIGHT_PX * 2; // scale=2
+  const pageHeightPx = A4_HEIGHT_PX * scale;
 
   let position = 0;
 
