@@ -136,3 +136,22 @@ TEXT SELECTION UX
 .note-app ::selection {
   background: rgba(37, 99, 235, 0.25);
 }
+
+
+/* =========================
+SOFT PDF BREAK SHADOW LINE
+========================= */
+
+.note-app .ProseMirror {
+
+  background-image: repeating-linear-gradient(
+    to bottom,
+
+    transparent 0px,
+    transparent 1099px,
+
+    rgba(0,0,0,0.15) 1099px,
+    rgba(0,0,0,0.15) 1101px
+  );
+
+}
