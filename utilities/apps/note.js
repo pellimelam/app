@@ -948,8 +948,8 @@ async function generateHighQualityPDF(htmlContent){
   temp.style.color = "#111827";
 
   temp.style.whiteSpace = "pre-wrap";
-  temp.style.wordBreak = "normal";
-  temp.style.overflowWrap = "break-word";
+  temp.style.wordBreak = "break-all";
+  temp.style.overflowWrap = "anywhere";
 
   /* =========================
      PRESERVE EMPTY LINES
