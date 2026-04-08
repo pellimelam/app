@@ -734,16 +734,21 @@ if(APP.editor){
           }
 
           await saveNote(note);
+          addA4GuideLines();
 
         } catch (e) {
           console.error("SAVE FAILED", e);
         }
-      }, 500);
+      }, 300);
 
     };
   })()
 
 });
+
+setTimeout(() => {
+  addA4GuideLines();
+}, 300);
 
 })();
 };
@@ -1044,4 +1049,42 @@ async function generateHighQualityPDF(htmlContent){
   }
 
   return pdf.output("blob");
+}
+
+
+function addA4GuideLines(){
+
+  const editor = document.querySelector(".ProseMirror");
+  if(!editor) return;
+
+  // remove old lines
+  document.querySelectorAll(".a4-guide-line").forEach(e => e.remove());
+
+  const pageHeight = 1123;
+  const padding = 48; // top + bottom (24 + 24)
+  const usableHeight = pageHeight - padding;
+
+  const totalHeight = editor.scrollHeight;
+
+  let current = usableHeight;
+
+  while(current < totalHeight){
+
+    const line = document.createElement("div");
+    line.className = "a4-guide-line";
+
+    line.style.position = "absolute";
+    line.style.left = "0";
+    line.style.right = "0";
+    line.style.top = current + "px";
+
+    line.style.borderTop = "2px dashed red";
+    line.style.opacity = "0.5";
+    line.style.zIndex = "5";
+    line.style.pointerEvents = "none";
+
+    editor.appendChild(line);
+
+    current += usableHeight;
+  }
 }
