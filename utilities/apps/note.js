@@ -928,29 +928,21 @@ async function generateHighQualityPDF(htmlContent){
 
   const temp = document.createElement("div");
 
-  /* =========================
-     EXACT EDITOR MATCH STYLES
-  ========================= */
-
   temp.style.position = "fixed";
   temp.style.left = "-9999px";
   temp.style.top = "0";
 
-  temp.style.width = "794px"; // A4 width
+  temp.style.width = "794px";
   temp.style.background = "#ffffff";
 
-  temp.style.padding = "24px"; // match editor padding
+  temp.style.padding = "24px";
   temp.style.fontFamily = "'Segoe UI', Arial, sans-serif";
   temp.style.fontSize = "16px";
   temp.style.lineHeight = "1.7";
   temp.style.color = "#111827";
 
-  temp.style.whiteSpace = "pre-wrap";   // 🔥 critical for spacing
+  temp.style.whiteSpace = "pre-wrap";
   temp.style.wordBreak = "break-word";
-
-  /* =========================
-     PRESERVE EMPTY LINES
-  ========================= */
 
   let processedHTML = htmlContent || "<p></p>";
 
@@ -960,7 +952,6 @@ async function generateHighQualityPDF(htmlContent){
 
   temp.innerHTML = processedHTML;
 
-  /* ensure empty paragraphs render */
   temp.querySelectorAll("p").forEach(p => {
     if (p.innerHTML.trim() === "" || p.innerHTML === "&nbsp;") {
       p.innerHTML = "&nbsp;";
@@ -969,67 +960,54 @@ async function generateHighQualityPDF(htmlContent){
 
   document.body.appendChild(temp);
 
-  /* =========================
-     RENDER TO CANVAS
-  ========================= */
-
   const canvas = await html2canvas(temp, {
-    scale: 3,
-    useCORS: true,
+    scale: 2,
     backgroundColor: "#ffffff"
   });
 
   document.body.removeChild(temp);
 
-  /* =========================
-     PDF GENERATION (A4)
-  ========================= */
-
-  const imgWidth = 794;
-  const pageHeight = 1123;
-
-  const imgHeight = canvas.height * imgWidth / canvas.width;
-
   const jsPDF = window.jspdf.jsPDF;
 
   const pdf = new jsPDF({
-    unit: "px",
-    format: [imgWidth, pageHeight]
+    unit: "mm",
+    format: "a4"
   });
+
+  /* =========================
+     EXACT A4 IN PIXELS
+  ========================= */
+
+  const A4_WIDTH_PX = 794;
+  const A4_HEIGHT_PX = 1123;
+
+  const pageHeightPx = A4_HEIGHT_PX * 2; // scale=2
+  const pageWidthMm = 210;
+  const pageHeightMm = 297;
 
   let position = 0;
 
-  while(position < imgHeight){
+  while(position < canvas.height){
 
     const pageCanvas = document.createElement("canvas");
-
     pageCanvas.width = canvas.width;
-    pageCanvas.height = pageHeight * canvas.width / imgWidth;
+    pageCanvas.height = pageHeightPx;
 
     const ctx = pageCanvas.getContext("2d");
 
-    /* force white background */
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-
-    const sourceY = position * canvas.width / imgWidth;
-    const remainingHeight = canvas.height - sourceY;
-
-    const drawHeight = Math.min(
-      pageCanvas.height,
-      remainingHeight
-    );
 
     ctx.drawImage(
       canvas,
       0,
-      sourceY,
+      position,
       canvas.width,
-      drawHeight,
+      pageHeightPx,
       0,
       0,
       canvas.width,
-      drawHeight
+      pageHeightPx
     );
 
     const imgData = pageCanvas.toDataURL("image/jpeg", 1.0);
@@ -1038,9 +1016,16 @@ async function generateHighQualityPDF(htmlContent){
       pdf.addPage();
     }
 
-    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight);
+    pdf.addImage(
+      imgData,
+      "JPEG",
+      0,
+      0,
+      pageWidthMm,
+      pageHeightMm
+    );
 
-    position += pageHeight;
+    position += pageHeightPx;
   }
 
   return pdf.output("blob");
