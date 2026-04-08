@@ -148,10 +148,10 @@ SOFT PDF BREAK SHADOW LINE
     to bottom,
 
     transparent 0px,
-    transparent 1099px,
+    transparent 1115px,   /* 🔥 adjusted */
 
-    rgba(0,0,0,0.15) 1099px,
-    rgba(0,0,0,0.15) 1101px
+    rgba(0,0,0,0.15) 1115px,
+    rgba(0,0,0,0.15) 1117px
   );
 
 }
