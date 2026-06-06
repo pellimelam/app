@@ -227,6 +227,11 @@ await renderNotes();
 DELETE / RENAME / PIN
 ========================= */
 APP.deleteNote = async function(id){
+
+  const ok = confirm("Are you sure you want to delete this project?");
+
+  if(!ok) return;
+
   await deleteNoteDB(id);
   await renderNotes();
 };
@@ -505,18 +510,23 @@ renderPages(note, noteId);
 
 APP.deletePage = async function(noteId, pageId){
 
-const notes = await getNotes();
-const note = notes.find(n => n.id === noteId);
-if(!note){
-  backToList();
-  return;
-}
+  const ok = confirm("Are you sure you want to delete this file?");
 
-note.pages = note.pages.filter(p => p.id !== pageId);
+  if(!ok) return;
 
-await saveNote(note);
+  const notes = await getNotes();
+  const note = notes.find(n => n.id === noteId);
 
-renderPages(note, noteId);
+  if(!note){
+    backToList();
+    return;
+  }
+
+  note.pages = note.pages.filter(p => p.id !== pageId);
+
+  await saveNote(note);
+
+  renderPages(note, noteId);
 };
 
 
