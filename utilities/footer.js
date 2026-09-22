@@ -6,7 +6,7 @@ const footer = `
 
 <div class="container">
 
-© 2026 Vidhwaan Group
+© 2026 Vidhwaan
 
 </div>
 
